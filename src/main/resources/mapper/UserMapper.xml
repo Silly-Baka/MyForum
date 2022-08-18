@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MyForum.mapper.UserMapper">
+    <sql id="allColomn">
+        id,username,password,salt,email,type,status,activation_code,header_url,create_time
+    </sql>
+    <sql id="insertColomn">
+        username,password,salt,email,type,status,activation_code,header_url,create_time
+    </sql>
+    <resultMap id="userMap" type="MyForum.pojo.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="salt" column="salt"/>
+        <result property="email" column="email"/>
+        <result property="type" column="type"/>
+        <result property="status" column="status"/>
+        <result property="activationCode" column="activation_code"/>
+        <result property="headerUrl" column="header_url"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <select id="selectUserByEmail" resultMap="userMap">
+        select <include refid="allColomn"/>
+        from user
+        where email = #{email}
+    </select>
+
+    <select id="selectUserById" resultMap="userMap">
+        select <include refid="allColomn"/>
+        from user
+        where id = #{id}
+    </select>
+
+    <select id="selectUserByUsername" resultMap="userMap">
+        select <include refid="allColomn"/>
+        from user
+        where username = #{username}
+    </select>
+
+    <insert id="addUser" parameterType="MyForum.pojo.User" useGeneratedKeys="true" keyProperty="id">
+        insert into user(<include refid="insertColomn"/>)
+        values(#{username},#{password},#{salt},#{email},#{type},#{status},#{activationCode},#{headerUrl},#{createTime})
+    </insert>
+
+    <update id="updateUserDynamic">
+        update user
+        <trim prefix="set" suffixOverrides=",">
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="salt != null and salt != ''">
+                salt = #{salt},
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email},
+            </if>
+            <if test="type != null">
+                type = #{type},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="activationCode != null and activationCode != ''">
+                activation_code = #{activationCode},
+            </if>
+            <if test="headerUrl != null and headerUrl != ''">
+                header_url = #{headerUrl},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+        </trim>
+        where id = #{id}
+    </update>
+</mapper>
