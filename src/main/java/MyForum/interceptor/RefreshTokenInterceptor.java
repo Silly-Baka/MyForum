@@ -42,9 +42,15 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         }
         String key = LOGIN_TOKEN_KEY + token;
         // 只要有token就可以登陆 直接从redis中获取用户信息
-        User user = (User) redisTemplate.opsForValue().get(token);
+        User user = (User) redisTemplate.opsForValue().get(key);
+        if(user == null){
+            return true;
+        }
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         UserHolder.addUser(userDTO);
+
+        //放到请求域当中 方便前端使用
+        request.setAttribute("currentUser",userDTO);
 
         // 更新redis中token的过期时间
         redisTemplate.expire(key,LOGIN_TOKEN_EXPIRED_TIME);

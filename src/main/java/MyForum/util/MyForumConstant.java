@@ -19,6 +19,14 @@ public class MyForumConstant {
      * 激活失败
      */
     public static final int ACTIVATION_FAIL = 0;
+    /**
+     * 成功登出
+     */
+    public static final int USER_LOGOUT_SUCCESS = 1;
+    /**
+     * 登出失败
+     */
+    public static final int USER_LOGOUT_FAIL = 0;
 
     //以下是Redis的常量
     /**
@@ -37,5 +45,13 @@ public class MyForumConstant {
      * 登陆token过期时间 默认为30分钟
      */
     public static final Duration LOGIN_TOKEN_EXPIRED_TIME = Duration.ofMinutes(30);
+    /**
+     * 忘记密码验证码key前缀
+     */
+    public static final String FORGET_CODE_KEY = "forget:code:";
+    /**
+     * 忘记密码验证码过期时间 默认为300秒
+     */
+    public static final Duration FORGET_CODE_EXPIRED_TIME = Duration.ofSeconds(300);
 
 }

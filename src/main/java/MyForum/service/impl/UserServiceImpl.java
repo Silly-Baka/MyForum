@@ -82,7 +82,7 @@ public class UserServiceImpl implements UserService {
         }
         // 校验验证码
         String realCode = (String) redisTemplate.opsForValue().get(LOGIN_CODE_KEY + session.getId());
-        if(!verifyCode.equals(realCode)){
+        if(!StrUtil.equalsIgnoreCase(verifyCode,realCode)){
             log.error("验证码错误");
             map.put("verifyCodeMsg","验证码错误，请重新获取");
             return map;
@@ -188,5 +188,57 @@ public class UserServiceImpl implements UserService {
             return ACTIVATION_SUCCESS;
         }
         return ACTIVATION_FAIL;
+    }
+
+    @Override
+    public Integer logout(String token) {
+        if(StrUtil.isBlank(token)){
+            return USER_LOGOUT_FAIL;
+        }
+        String key = LOGIN_TOKEN_KEY + token;
+        redisTemplate.delete(key);
+
+        return USER_LOGOUT_SUCCESS;
+    }
+
+    @Override
+    public Map<String,Object> forget(String email, String verifyCode, String password) {
+        Map<String,Object> map = new HashMap<>();
+        if(StrUtil.isBlank(email)){
+            map.put("emailMsg","输入的邮箱不能为空！");
+            return map;
+        }
+        if(StrUtil.isBlank(verifyCode)){
+            map.put("verifyCodeMsg","输入的验证码不能为空！");
+            return map;
+        }
+        if(StrUtil.isBlank(password)){
+            map.put("passwordMsg","输入的新密码不能为空！");
+            return map;
+        }
+
+        String key = FORGET_CODE_KEY + email;
+        String realCode = (String) redisTemplate.opsForValue().get(key);
+        if(StrUtil.isBlank(realCode)){
+            map.put("verifyCodeMsg","尚未获取验证码！请获取后再重新重置");
+            return map;
+        }
+        if(!StrUtil.equalsIgnoreCase(verifyCode,realCode)){
+            map.put("verifyCodeMsg","验证码错误！请重新检查后再次输入验证码");
+            return map;
+        }
+        // 先通过邮箱从数据库中获取用户id信息
+        User user = userMapper.selectUserByEmail(email);
+        if(user == null){
+            map.put("emailMsg","该邮箱尚未注册用户，或者用户不存在！请重新输入邮箱");
+            return map;
+        }
+        // 再更改密码 再存进数据库
+        user.setPassword(password);
+        userMapper.updateUserDynamic(user);
+
+        map.put("success",1);
+
+        return map;
     }
 }

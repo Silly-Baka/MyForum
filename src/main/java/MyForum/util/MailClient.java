@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Date: 2022/8/9
@@ -27,19 +29,36 @@ public class MailClient {
     @Value("${spring.mail.username}")
     private String from;
 
+    public static final ExecutorService THREAD_POOL = Executors.newFixedThreadPool(10);
+
     public void sendMail(String to,String subject,String content){
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
+        THREAD_POOL.execute(new sendMailTask(to, subject, content));
+    }
+    private class sendMailTask implements Runnable{
+        private String to;
+        private String subject;
+        private String content;
 
-            MimeMessageHelper helper = new MimeMessageHelper(message);
-            helper.setFrom(from);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(content,true);
+        public sendMailTask(String to, String subject, String content) {
+            this.to = to;
+            this.subject = subject;
+            this.content = content;
+        }
 
-            mailSender.send(helper.getMimeMessage());
-        } catch (MessagingException e) {
-            log.error("发送邮件失败：",e);
+        @Override
+        public void run() {
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+
+                MimeMessageHelper helper = new MimeMessageHelper(message);
+                helper.setFrom(from);
+                helper.setTo(to);
+                helper.setSubject(subject);
+                helper.setText(content,true);
+                mailSender.send(helper.getMimeMessage());
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

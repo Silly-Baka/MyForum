@@ -30,18 +30,4 @@ window.alert = function(message) {
 	$(".alert-box .modal-body p").text(message);
 	$(".alert-box").modal("show");
 }
-// 设置后台服务地址
-axios.defaults.baseURL = "http://localhost:8080";
-axios.defaults.timeout = 2000;
-// request拦截器，将用户token放入头中
-let token = sessionStorage.getItem("token");
-axios.interceptors.request.use(
-	config => {
-		if(token) config.headers['authorization'] = token
-		return config
-	},
-	error => {
-		console.log(error)
-		return Promise.reject(error)
-	}
-)
+

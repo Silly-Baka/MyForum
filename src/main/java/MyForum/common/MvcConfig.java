@@ -30,11 +30,13 @@ public class MvcConfig extends WebMvcConfigurationSupport {
                 .order(-1);
 
         registry.addInterceptor(loginInterceptor)
+                .addPathPatterns("/**")
                 .excludePathPatterns(
                         "/index",
                         "/user/login",
                         "/user/register",
-                        "/kaptcha",
+                        "/user/forget",
+                        "/common/**",
                         "/activation/**",
                         "/postDetail/**",
                         "/static/**"

@@ -30,6 +30,7 @@ public class RedisConfig {
         //todo  value采用json序列化方式
 //        // 定义一个json序列化器
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(new JacksonObjectMapper());
+
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashValueSerializer(serializer);
 

@@ -1,12 +1,19 @@
 package MyForum.controller;
 
+import MyForum.util.MailClient;
+import cn.hutool.core.util.StrUtil;
 import com.google.code.kaptcha.Producer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
@@ -16,8 +23,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static MyForum.util.MyForumConstant.LOGIN_CODE_EXPIRED_TIME;
-import static MyForum.util.MyForumConstant.LOGIN_CODE_KEY;
+import static MyForum.util.MyForumConstant.*;
 
 /**
  * Date: 2022/8/11
@@ -25,17 +31,24 @@ import static MyForum.util.MyForumConstant.LOGIN_CODE_KEY;
  *
  * @Author SillyBaka
  *
- * Description：处理Kaptcha验证码的Controller
+ * Description：处理通用请求的Controller
  **/
 @Controller
 @Slf4j
-public class KaptchaController {
+@RequestMapping("/common")
+public class CommonController {
 
     @Autowired
     private Producer producer;
 
     @Autowired
     private RedisTemplate<String,Object> redisTemplate;
+
+    @Autowired
+    private TemplateEngine engine;
+
+    @Autowired
+    private MailClient mailClient;
 
     /**
      * 获取Kaptcha验证码和图片 并将图片作为响应返回
@@ -64,5 +77,35 @@ public class KaptchaController {
         } catch (IOException e) {
             log.error("获取验证码失败！",e);
         }
+    }
+    /**
+     * 获取验证码
+     * @param email 用户邮箱
+     */
+    @GetMapping("/forgetCode")
+    public String getForgetCode(@RequestParam("email") String email, Model model){
+        if(StrUtil.isBlank(email)){
+            model.addAttribute("emailMsg","输入的邮箱不能为空！请重新输入");
+            return "/site/forget";
+        }
+        // 获得验证码
+        String verifyCode = producer.createText();
+        String key = FORGET_CODE_KEY + email;
+        // 将验证码存入redis中
+        redisTemplate.opsForValue().set(key,verifyCode,FORGET_CODE_EXPIRED_TIME);
+
+        // 将信息通过模板引擎封装成邮件
+        Context context = new Context();
+        context.setVariable("email",email);
+        context.setVariable("verifyCode",verifyCode);
+
+        String process = engine.process("/mail/forget", context);
+
+        // 向目标邮箱发送验证码
+        mailClient.sendMail(email,"重置密码邮件",process);
+
+        model.addAttribute("verifyCodeMsg","已向该邮箱发送验证码！");
+
+        return "/site/forget";
     }
 }

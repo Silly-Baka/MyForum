@@ -61,7 +61,14 @@ public class PostDetailServiceImpl implements PostDetailService {
         Page<PostDetail> page = new Page<>(currentPage, totalCount);
 
         List<PostDetail> postList = postDetailMapper.getHotPosts(currentPage,page.getPageSize());
-
+        // 将user信息包装进每一个postDetaill里面
+        // 批量查询会不会提高效率？
+        for (PostDetail postDetail : postList) {
+            Long userId = postDetail.getUserId();
+            User user = userMapper.selectUserById(userId);
+            UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+            postDetail.setUser(userDTO);
+        }
         page.setRecords(postList);
 
         return page;

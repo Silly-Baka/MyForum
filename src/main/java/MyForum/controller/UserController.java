@@ -1,25 +1,17 @@
 package MyForum.controller;
 
-import MyForum.DTO.UserDTO;
-import MyForum.common.UserHolder;
 import MyForum.pojo.User;
 import MyForum.service.UserService;
-import cn.hutool.core.img.Img;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Map;
+
+import static MyForum.util.MyForumConstant.USER_LOGOUT_SUCCESS;
 
 /**
  * Date: 2022/8/9
@@ -49,7 +41,7 @@ public class UserController {
         Map<String, Object> map = userService.login(username, password, verifyCode, session);
         // 如果登陆成功 则重定向到首页
         if(map.containsKey("successMsg")){
-            return "redirect:index";
+            return "redirect:/index";
         }else {
         // 登陆失败 则返回原登陆页面 并显示错误信息
             model.addAttribute("usernameMsg",map.get("usernameMsg"));
@@ -86,24 +78,34 @@ public class UserController {
     }
 
     /**
-     * 获得当前登陆用户的头像
+     * 退出登录
      */
-    @GetMapping("/headerImg")
-    public void getCurrentHeaderImg(HttpServletResponse response) throws IOException {
-        UserDTO user = UserHolder.getCurrentUser();
-        Img img;
-        if(user == null){
-            // 用户没有登陆 返回默认的头像
-            img = Img.from(Paths.get("http://images.nowcoder.com/head/1t.png"));
+    @GetMapping("/logout")
+    public String logout(HttpSession session){
+    // 直接删redis？对数据库压力会不会过大？若是只删本地token，那token被人获取了也还能继续登录 或者恶意访问数据库 不安全
+    // 所以这边同时删除redis和客户端的token 减少去redis中查询的次数 同时维护了安全性
+        String token = (String) session.getAttribute("token");
+        Integer result = userService.logout(token);
+        if(result == USER_LOGOUT_SUCCESS){
+            session.removeAttribute("token");
+            log.debug("登出成功！");
         }else {
-            img = Img.from(Paths.get(user.getHeaderUrl()));
+            log.debug("登出失败，尚未登录！");
         }
-        response.setContentType("image/png");
-        img.write(response.getOutputStream());
+        return "redirect:/user/login";
     }
 
-//    @GetMapping("/headerImg/{userId}")
-//    public void getHeaderImgByUserId(@PathVariable("userId") Long userId){
-//
-//    }
+    /**
+     * 打开忘记密码页面
+     */
+    @GetMapping("/forget")
+    public String forgetPage(){
+        return "site/forget";
+    }
+
+    @PostMapping("/forget")
+    public String forget(Map<String,Object> map){
+        return "";
+    }
+
 }

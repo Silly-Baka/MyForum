@@ -35,4 +35,20 @@ public interface UserService {
      * @return 返回激活结果
      */
     Integer activation(Long userId,String activationCode);
+
+    /**
+     * 登出用户
+     * @param token 前端给的登录凭证
+     * @return 返回登出结果
+     */
+    Integer logout(String token);
+
+    /**
+     * 忘记密码功能，用于忘记密码后修改密码
+     * @param email 邮箱
+     * @param verifyCode 验证码
+     * @param password 新密码
+     * @return 操作结果
+     */
+    Map<String,Object> forget(String email,String verifyCode,String password);
 }
