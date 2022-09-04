@@ -2,11 +2,11 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="MyForum.mapper.PostDetailMapper">
+<mapper namespace="MyForum.mapper.PostMapper">
     <sql id="allColumn">
-        user_id,title,content,type,status,create_time,comment_count,score
+        id,user_id,title,content,type,status,create_time,comment_count,score
     </sql>
-    <resultMap id="PostDetailMap" type="MyForum.pojo.PostDetail">
+    <resultMap id="PostMap" type="MyForum.pojo.Post">
         <id property="id" column="id"/>
         <result property="userId" column="user_id"/>
         <result property="title" column="title"/>
@@ -17,22 +17,45 @@
         <result property="score" column="score"/>
         <result property="commentCount" column="comment_count"/>
     </resultMap>
-    <select id="getPostList" resultMap="PostDetailMap">
+    <select id="getPostList" resultMap="PostMap">
         select <include refid="allColumn"/>
         from post_detail
         where status != 2
         order by type desc
-        limit #{currentPage},#{pageSize}
+        limit #{offset},#{pageSize}
     </select>
     <select id="getCount" resultType="integer">
         select count(*)
         from post_detail
+        <where>
+            <if test="userId != null">
+                user_id = #{userId}
+            </if>
+        </where>
     </select>
-    <select id="getHotPosts" resultMap="PostDetailMap">
+
+    <select id="getHotPosts" resultMap="PostMap">
         select <include refid="allColumn"/>
         from post_detail
         where status != 2
         order by comment_count and score desc
-        limit #{currentPage},#{pageSize}
+        limit #{offset},#{pageSize}
     </select>
+    <select id="getPostById" resultMap="PostMap">
+        select <include refid="allColumn"/>
+        from post_detail
+        where id = #{id}
+    </select>
+
+    <select id="getPostListByUserId" resultMap="PostMap">
+        select <include refid="allColumn"/>
+        from post_detail
+        where user_id = #{userId}
+        limit #{offset},#{pageSize}
+    </select>
+
+    <insert id="addPost">
+        insert into post_detail(<include refid="allColumn"/>)
+        values(null,#{userId},#{title},#{content},#{type},#{status},#{createTime},#{commentCount},#{score})
+    </insert>
 </mapper>

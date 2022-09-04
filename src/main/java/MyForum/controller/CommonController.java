@@ -9,9 +9,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -20,10 +19,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static MyForum.util.MyForumConstant.*;
+import static MyForum.util.RedisConstant.*;
 
 /**
  * Date: 2022/8/11
@@ -68,7 +68,7 @@ public class CommonController {
         String key = LOGIN_CODE_KEY + sessionId;
         redisTemplate.opsForValue().set(key,verifyCode);
         // 设置验证码的过期时间
-        redisTemplate.expire(key,LOGIN_CODE_EXPIRED_TIME);
+        redisTemplate.expire(key,LOGIN_CODE_EXPIRED_TIME,TimeUnit.SECONDS);
 
         // 通过响应对象的输出流 将图片写回小页面
         try {
@@ -108,4 +108,13 @@ public class CommonController {
 
         return "/site/forget";
     }
+
+    /**
+     * 获取操作成功页面
+     */
+    @GetMapping("/success")
+    public String toSuccessPage(){
+        return "site/success";
+    }
+
 }

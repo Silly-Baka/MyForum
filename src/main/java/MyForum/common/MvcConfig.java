@@ -38,7 +38,7 @@ public class MvcConfig extends WebMvcConfigurationSupport {
                         "/user/forget",
                         "/common/**",
                         "/activation/**",
-                        "/postDetail/**",
+                        "/post/**",
                         "/static/**"
                 );
     }

@@ -51,6 +51,11 @@ public class Page<T> implements Serializable {
     public Page(){
         pageSize = Config.getPageSize();
     }
+    public Page(Integer totalRows){
+        this();
+        this.totalCount = totalRows;
+        total = getTotalPage();
+    }
     public Page(Integer currentPage, Integer totalRows) {
         this();
         this.currentPage = currentPage;

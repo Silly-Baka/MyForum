@@ -27,31 +27,23 @@ public class MyForumConstant {
      * 登出失败
      */
     public static final int USER_LOGOUT_FAIL = 0;
+    /**
+     * 帖子的一级评论
+     */
+    public static final int COMMENT_TYPE_FIRST = 1;
+    /**
+     * 二级评论（评论的评论）
+     */
+    public static final int COMMENT_TYPE_SECOND = 2;
 
-    //以下是Redis的常量
+    // 消息类型的常量
     /**
-     * 验证码key前缀 + sessionId
+     * 私信
      */
-    public static final String LOGIN_CODE_KEY = "login:code:";
+    public static final int MESSAGE_TYPE_LETTER = 0;
     /**
-     * 验证码过期时间 默认为300秒
+     * 关注
      */
-    public static final Duration LOGIN_CODE_EXPIRED_TIME = Duration.ofSeconds(300);
-    /**
-     * 用户登陆token前缀
-     */
-    public static final String LOGIN_TOKEN_KEY = "login:token:";
-    /**
-     * 登陆token过期时间 默认为30分钟
-     */
-    public static final Duration LOGIN_TOKEN_EXPIRED_TIME = Duration.ofMinutes(30);
-    /**
-     * 忘记密码验证码key前缀
-     */
-    public static final String FORGET_CODE_KEY = "forget:code:";
-    /**
-     * 忘记密码验证码过期时间 默认为300秒
-     */
-    public static final Duration FORGET_CODE_EXPIRED_TIME = Duration.ofSeconds(300);
+    public static final int MESSAGE_TYPE_FOLLOW = 1;
 
 }

@@ -1,5 +1,6 @@
 package MyForum.mapper;
 
+import MyForum.DTO.UserDTO;
 import MyForum.pojo.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -44,4 +45,11 @@ public interface UserMapper {
      * @return 用户信息
      */
     User selectUserByUsername(@Param("username") String username);
+
+    /**
+     * 根据用户id获得用户的dto对象
+     * @param userId 用户id
+     * @return
+     */
+    User selectUserDTOByUserId(@Param("userId") Long userId);
 }

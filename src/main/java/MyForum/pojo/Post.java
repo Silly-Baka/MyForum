@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  **/
 @Data
 @NoArgsConstructor
-public class PostDetail implements Serializable {
+public class Post implements Serializable {
     /**
      * 帖子id
      */

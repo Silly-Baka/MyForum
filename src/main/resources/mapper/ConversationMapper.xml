@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MyForum.mapper.ConversationMapper">
+    <sql id="allColumn">
+        id,user1_id,user2_id,letter_count,newest_message_id
+    </sql>
+    <resultMap id="conversationMap" type="MyForum.pojo.Conversation">
+        <id column="id" property="id"/>
+        <result column="letter_count" property="letterCount"/>
+        <result column="newest_message_id" property="newestMessageId"/>
+        <result column="user1_id" property="user1Id"/>
+        <result column="user2_id" property="user2Id"/>
+    </resultMap>
+    <select id="selectConversationListByUserId" resultMap="conversationMap">
+        select <include refid="allColumn"/>
+        from conversation
+        where user1_id = #{userId} or user2_id = #{userId}
+    </select>
+
+    <select id="selectCountByUserId" resultType="int">
+        select count(*)
+        from conversation
+        where user1_id = #{userId} or user2_id = #{userId}
+    </select>
+
+    <select id="selectConversationById" resultMap="conversationMap">
+        select <include refid="allColumn"/>
+        from conversation
+        where id = #{id}
+    </select>
+
+    <update id="updateConversationLetterCount">
+        update conversation c
+        set c.letter_count = (
+            select count(*)
+            from message
+            where message_type = 0 and entity_id = c.id and status != 2
+            )
+    </update>
+</mapper>

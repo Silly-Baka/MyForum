@@ -26,7 +26,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         UserDTO user = UserHolder.getCurrentUser();
         if(user == null){
             log.info("未登录，请求已拦截，拦截路径为：{}",request.getRequestURI());
-            response.sendRedirect("/index");
+            response.sendRedirect("/user/login");
             return false;
         }
         return true;
@@ -34,7 +34,6 @@ public class LoginInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        // 每次请求 执行完controller方法后 渲染视图完后 删除user信息 防止内存泄漏
         UserHolder.removeUser();
     }
 }

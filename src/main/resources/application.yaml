@@ -28,9 +28,14 @@ spring:
         min-idle: 1
         time-between-eviction-runs: 100000
     database: 1
+  servlet:
+    multipart:
+      max-file-size: 5MB
 mybatis:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    lazy-loading-enabled: true
+    aggressive-lazy-loading: false
   mapper-locations: classpath:mapper/**/*.xml
 logging:
   level:
@@ -39,3 +44,5 @@ logging:
 MyForum:
   path:
     domain: http://localhost:8080
+    user:
+      headerImagePath: C:\MyForum_local\user_image\

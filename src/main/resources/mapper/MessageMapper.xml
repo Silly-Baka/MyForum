@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MyForum.mapper.MessageMapper">
+    <sql id="allColumn">
+        id,from_id,to_id,content,status,create_time,message_type,entity_id
+    </sql>
+    <resultMap id="messageMap" type="MyForum.pojo.Message">
+        <id column="id" property="id"/>
+        <result column="from_id" property="fromId"/>
+        <result column="to_id" property="toId"/>
+        <result column="content" property="content"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="message_type" property="messageType"/>
+        <result column="entity_id" property="entityId"/>
+    </resultMap>
+    <select id="selectFromIdListByToId" resultType="long">
+        select distinct from_id
+        from message
+        where to_id = #{toId}
+    </select>
+
+    <select id="selectMessageListByFromIdAndToId" resultMap="messageMap">
+        select <include refid="allColumn"/>
+        from message
+        where from_id = #{fromId} and to_id = #{toId}
+        or from_id = #{toId} and to_id = #{fromId}
+        order by create_time
+    </select>
+
+    <select id="selectMessageById" resultMap="messageMap">
+        select <include refid="allColumn"/>
+        from message
+        where id = #{id} and status != 2
+    </select>
+
+    <select id="selectMessageListByTypeAndEntityId" resultMap="messageMap">
+        select <include refid="allColumn"/>
+        from message
+        where message_type = #{type} and entity_id = #{entityId} and status != 2
+        order by create_time
+        limit #{offset},#{pageSize}
+    </select>
+
+    <select id="countMessageByEntityId" resultType="int">
+        select count(*)
+        from message
+        where entity_id = #{entityId} and status != 2
+    </select>
+</mapper>

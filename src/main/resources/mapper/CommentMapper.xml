@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MyForum.mapper.CommentMapper">
+    <sql id="allColumn">
+        id,user_id,type,entity_id,target_id,content,status,create_time
+    </sql>
+    <resultMap id="commentMap" type="MyForum.pojo.Comment">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="type" property="type"/>
+        <result column="entity_id" property="entityId"/>
+        <result column="target_id" property="targetId"/>
+        <result column="content" property="content"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+<!--        <collection property="commentList" ofType="MyForum.pojo.Comment"-->
+<!--                    select="MyForum.mapper.CommentMapper.getCommentListByTypeAndEntityId"-->
+<!--                    column="{type=comment_type,entityId=id}"-->
+<!--                    fetchType="eager"/>-->
+        <association property="postTitle" javaType="string" column="title"/>
+    </resultMap>
+    <select id="getCommentListByTypeAndEntityId" resultMap="commentMap" parameterType="map" >
+        select <include refid="allColumn"/>
+        from comment
+        where type = #{type} and entity_id = #{entityId}
+        order by create_time
+        <if test="offset != null and pageSize != null">
+            limit #{offset},#{pageSize}
+        </if>
+    </select>
+    <select id="getCount" resultType="integer">
+        select count(*)
+        from comment
+        <where>
+            <if test="userId != null">
+                user_id = #{userId}
+            </if>
+            <if test="type != null">
+                and type = #{type}
+            </if>
+            <if test="entityId != null">
+                and entity_id = #{entityId}
+            </if>
+        </where>
+    </select>
+    <select id="getCommentListByUserId" resultMap="commentMap">
+        select c.id, c.user_id, c.entity_id, c.target_id, c.content, c.status, c.create_time, c.type, p.title
+        from comment c
+        left join post_detail p
+        on c.entity_id = p.id
+        where c.user_id = #{userId} and c.type = 1
+        limit #{offset},#{pageSize}
+    </select>
+
+    <insert id="addComment" keyProperty="id">
+        insert into comment (id, user_id, type, entity_id, target_id, content, status, create_time)
+        values (#{id},#{userId},#{type},#{entityId},#{targetId},#{content},#{status},#{createTime})
+    </insert>
+</mapper>

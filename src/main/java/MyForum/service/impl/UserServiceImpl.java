@@ -6,7 +6,7 @@ import MyForum.mapper.UserMapper;
 import MyForum.pojo.User;
 import MyForum.service.UserService;
 import MyForum.util.MailClient;
-import MyForum.util.RandomUtil;
+import MyForum.util.CommonUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -14,17 +14,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static MyForum.util.MyForumConstant.*;
-
+import static MyForum.util.RedisConstant.*;
 /**
  * Date: 2022/8/9
  * Time: 20:52
@@ -44,6 +51,9 @@ public class UserServiceImpl implements UserService {
 
     @Value("${MyForum.path.domain}")
     private String domain;
+
+    @Value("${MyForum.path.user.headerImagePath}")
+    private String headerImagePath;
 
     @Autowired
     private RedisTemplate<String,Object> redisTemplate;
@@ -74,7 +84,7 @@ public class UserServiceImpl implements UserService {
             return map;
         }
         // 校验密码
-        password = RandomUtil.md5(password + realUser.getSalt());
+        password = CommonUtil.md5(password + realUser.getSalt());
         if(!password.equals(realUser.getPassword())){
             log.error("密码错误，登陆失败！");
             map.put("passwordMsg","密码错误！");
@@ -96,7 +106,7 @@ public class UserServiceImpl implements UserService {
         //todo  将用户信息存放在redis中
         String key = LOGIN_TOKEN_KEY + token;
         redisTemplate.opsForValue().set(key,realUser);
-        redisTemplate.expire(key,LOGIN_TOKEN_EXPIRED_TIME);
+        redisTemplate.expire(key,LOGIN_TOKEN_EXPIRED_TIME, TimeUnit.MINUTES);
 
         //todo 使用BeanUtil将用户信息转换为DTO
         UserDTO user = BeanUtil.copyProperties(realUser, UserDTO.class);
@@ -142,16 +152,16 @@ public class UserServiceImpl implements UserService {
             map.put("emailMsg","该邮箱已注册！请更换邮箱");
             return map;
         }
-        String salt = RandomUtil.generateUUID().substring(5);
+        String salt = CommonUtil.generateUUID().substring(5);
         user.setSalt(salt);
         // 将密码使用MD5加密
-        password = RandomUtil.md5(password + salt);
+        password = CommonUtil.md5(password + salt);
         user.setPassword(password);
         user.setType(0);
         user.setStatus(0);
-        String activationCode = RandomUtil.generateUUID();
+        String activationCode = CommonUtil.generateUUID();
         user.setActivationCode(activationCode);
-        user.setHeaderUrl(String.format("http://images.nowcoder.com/head/%dt.png",RandomUtil.randomInt(1000)));
+        user.setHeaderUrl(String.format("http://images.nowcoder.com/head/%dt.png", CommonUtil.randomInt(1000)));
         user.setCreateTime(LocalDateTime.now());
         // 插入数据库
         userMapper.addUser(user);
@@ -234,10 +244,115 @@ public class UserServiceImpl implements UserService {
             return map;
         }
         // 再更改密码 再存进数据库
+        password = CommonUtil.md5(password + user.getSalt());
         user.setPassword(password);
         userMapper.updateUserDynamic(user);
 
         map.put("success",1);
+
+        return map;
+    }
+
+    @Override
+    public Map<String,String> uploadHeaderImage(UserDTO user, MultipartFile headerImage, String token) {
+        Map<String,String> map = new HashMap<>();
+        String filename = headerImage.getOriginalFilename();
+        String suffix = filename.substring(filename.lastIndexOf("."));
+        // 后缀为空 则文件格式不正确
+        if(StrUtil.isBlank(suffix)){
+            map.put("error","上传的文件格式不正确！");
+            return map;
+        }
+        String newFileName = CommonUtil.generateUUID() + suffix;
+        // http://localhost:8080/user/header/filename
+        String headerUrl = domain + "/user/header/" + newFileName;
+
+        // 更新用户的头像url
+        User newUser = BeanUtil.copyProperties(user, User.class);
+        newUser.setHeaderUrl(headerUrl);
+        userMapper.updateUserDynamic(newUser);
+
+        // 更新Redis中的token用户信息
+        String key = LOGIN_TOKEN_KEY + token;
+        redisTemplate.opsForValue().set(key,newUser);
+
+        // 将头像文件存放进服务器本地
+        try {
+            String filePath = headerImagePath + newFileName;
+            headerImage.transferTo(new File(filePath));
+        } catch (IOException e) {
+            log.debug("上传更新用户头像失败！");
+            throw new RuntimeException("上传文件失败！服务器发生异常");
+        }
+
+        map.put("success","1");
+        return map;
+    }
+
+    @Override
+    public void getHeaderImage(String filename, HttpServletResponse response) {
+        String filePath = headerImagePath + filename;
+        String suffix = filename.substring(filename.lastIndexOf(".")+1);
+        response.setContentType("image/"+suffix);
+
+        try(FileInputStream fis = new FileInputStream(filePath)){
+
+            ServletOutputStream os = response.getOutputStream();
+            byte[] bytes = new byte[1024];
+            int len = 0;
+            while ((len = fis.read(bytes)) != -1){
+                os.write(bytes,0,len);
+            }
+
+        } catch (IOException e) {
+            log.debug("获取头像图片失败！");
+            throw new RuntimeException("获取头像图片失败，服务器发生异常！");
+        }
+    }
+
+    @Override
+    public Map<String, Object> changePassword(String oldPassword, String newPassword, String confirmPassword) {
+        Map<String,Object> map = new HashMap<>();
+        if(StrUtil.isBlank(oldPassword)){
+            map.put("oldPasswordMsg","原密码输入不能为空");
+            return map;
+        }
+        if(StrUtil.isBlank(newPassword)){
+            map.put("newPasswordMsg","新密码输入不能为空");
+            return map;
+        }
+        if(StrUtil.isBlank(confirmPassword)){
+            map.put("confirmPasswordMsg","确认密码输入不能为空");
+            return map;
+        }
+        UserDTO currentUser = UserHolder.getCurrentUser();
+
+        User user = userMapper.selectUserById(currentUser.getId());
+        if(user == null){
+            log.error("服务器信息错误，查询不到此登录用户");
+            throw new RuntimeException("服务器信息错误，查询不到此登录用户");
+        }
+        String password = user.getPassword();
+        // 将密码经过MD5加密
+        oldPassword = CommonUtil.md5(oldPassword + user.getSalt());
+        newPassword = CommonUtil.md5(newPassword + user.getSalt());
+        confirmPassword = CommonUtil.md5(confirmPassword + user.getSalt());
+        // 验证原密码
+        if(!oldPassword.equals(password)){
+            map.put("oldPasswordMsg","原密码错误，请重新输入");
+            return map;
+        }
+        // 验证新密码
+        if(!newPassword.equals(confirmPassword)){
+            map.put("confirmPasswordMsg","请重新确认密码，两次的输入不一致");
+            return map;
+        }
+        // 更改密码 保存到数据库中
+        User newUser = new User(user.getId());
+        newUser.setPassword(newPassword);
+
+        userMapper.updateUserDynamic(newUser);
+        map.put("success","1");
 
         return map;
     }

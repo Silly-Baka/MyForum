@@ -13,8 +13,10 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static MyForum.util.MyForumConstant.LOGIN_TOKEN_EXPIRED_TIME;
-import static MyForum.util.MyForumConstant.LOGIN_TOKEN_KEY;
+import java.util.concurrent.TimeUnit;
+
+import static MyForum.util.RedisConstant.LOGIN_TOKEN_EXPIRED_TIME;
+import static MyForum.util.RedisConstant.LOGIN_TOKEN_KEY;
 
 /**
  * Date: 2022/8/17
@@ -43,17 +45,19 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         String key = LOGIN_TOKEN_KEY + token;
         // 只要有token就可以登陆 直接从redis中获取用户信息
         User user = (User) redisTemplate.opsForValue().get(key);
+        // redis中查不到 检查线程内还有没有 有就删掉 保持数据一致性
         if(user == null){
+            UserHolder.removeUser();
             return true;
         }
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         UserHolder.addUser(userDTO);
 
         //放到请求域当中 方便前端使用
-        request.setAttribute("currentUser",userDTO);
+        request.setAttribute("currentUser",user);
 
         // 更新redis中token的过期时间
-        redisTemplate.expire(key,LOGIN_TOKEN_EXPIRED_TIME);
+        redisTemplate.expire(key,LOGIN_TOKEN_EXPIRED_TIME, TimeUnit.MINUTES);
 
         return true;
     }

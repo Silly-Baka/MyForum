@@ -1,8 +1,8 @@
 package MyForum.DTO;
 
-import MyForum.pojo.User;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+
+import java.time.LocalDateTime;
 
 /**
  * Date: 2022/8/9
@@ -25,4 +25,8 @@ public class UserDTO{
      * 头像链接
      */
     private String headerUrl;
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 }
