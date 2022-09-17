@@ -1,16 +1,17 @@
 package MyForum.controller;
 
+import MyForum.common.UserHolder;
+import MyForum.service.CommonService;
+import MyForum.util.CommonUtil;
 import MyForum.util.MailClient;
 import cn.hutool.core.util.StrUtil;
 import com.google.code.kaptcha.Producer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -19,11 +20,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static MyForum.util.RedisConstant.*;
+import static MyForum.redis.RedisConstant.*;
 
 /**
  * Date: 2022/8/11
@@ -49,6 +50,9 @@ public class CommonController {
 
     @Autowired
     private MailClient mailClient;
+
+    @Autowired
+    private CommonService commonService;
 
     /**
      * 获取Kaptcha验证码和图片 并将图片作为响应返回
@@ -117,4 +121,41 @@ public class CommonController {
         return "site/success";
     }
 
+
+    /**
+     * 点赞功能 抽象成单个控制器方法
+     * @param entityType 实体类型
+     * @param entityId 实体id
+     */
+    @GetMapping("/like/{entityType}/{entityId}")
+    @ResponseBody
+    public String like(@PathVariable("entityType") Integer entityType,
+                       @PathVariable("entityId") Long entityId,
+                       Long entityUserId){
+        if(entityType == null || entityId == null || entityUserId == null){
+            return CommonUtil.getJsonString(0,"点赞失败！参数不能为空");
+        }
+        Map<String, Object> result = commonService.like(entityType, entityId, entityUserId);
+
+        return CommonUtil.getJsonString(200,"点赞成功",result);
+    }
+
+    /**
+     * 关注指定用户
+     * @param userId 指定用户id
+     */
+    @GetMapping("/follow/{userId}")
+    @ResponseBody
+    public String follow(@PathVariable("userId") Long userId){
+        if(userId == null){
+            return CommonUtil.getJsonString(0,"关注失败！参数不能为空");
+        }
+        if(userId.equals(UserHolder.getCurrentUser().getId())){
+            return CommonUtil.getJsonString(0,"关注失败！不能关注自己喔");
+        }
+
+        Map<String, Object> result = commonService.follow(userId);
+
+        return CommonUtil.getJsonString(200,"关注成功",result);
+    }
 }

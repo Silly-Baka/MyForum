@@ -77,7 +77,7 @@
 				<ul class="list-unstyled mt-4">
 					<li class="media pb-3 pt-3 ml-5 pl-5 mb-2" th:each="letter:${conversation.messageList}">
 						<th:block th:with="isFrom=${letter.fromId == fromUser.id ? true : false}">
-						<a href="profile.html" th:if="${isFrom == true}">
+						<a th:href="@{|/user/profile/${fromUser.id}|}" th:if="${isFrom == true}">
 							<img th:src="@{|${fromUser.headerUrl}|}" class="mr-4 rounded-circle user-header" alt="用户头像" >
 						</a>
 						<div class="toast show d-lg-block" role="alert" aria-live="assertive" aria-atomic="true">

@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="MyForum.mapper.PostMapper">
     <sql id="allColumn">
-        id,user_id,title,content,type,status,create_time,comment_count,score
+        id,user_id,title,content,type,status,create_time,comment_count
     </sql>
     <resultMap id="PostMap" type="MyForum.pojo.Post">
         <id property="id" column="id"/>
@@ -53,6 +53,55 @@
         where user_id = #{userId}
         limit #{offset},#{pageSize}
     </select>
+
+    <select id="getScoreByPostId" resultType="int">
+        select score
+        from post_detail
+        where id = #{postId}
+    </select>
+
+    <update id="updatePostDynamic">
+        update post_detail
+        <trim prefix="set" suffixOverrides=",">
+            <if test="userId != null">
+                user_id = #{userId},
+            </if>
+            <if test="title != null and title != ''">
+                title = #{title},
+            </if>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+            <if test="type != null">
+                type = #{type},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+            <if test="commentCount != null">
+                comment_count = #{commentCount},
+            </if>
+            <if test="score != null">
+                score = #{score}
+            </if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <update id="incrScoreByPostId">
+        update post_detail
+        set score =
+        <if test="incr == true">
+            score+1
+        </if>
+        <if test="incr != true">
+            score-1
+        </if>
+        where id = #{postId}
+    </update>
 
     <insert id="addPost">
         insert into post_detail(<include refid="allColumn"/>)

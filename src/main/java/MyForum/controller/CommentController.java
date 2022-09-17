@@ -1,10 +1,13 @@
 package MyForum.controller;
 
+import MyForum.DTO.CommentDTO;
 import MyForum.DTO.Page;
+import MyForum.common.UserHolder;
 import MyForum.pojo.Comment;
 import MyForum.pojo.Post;
 import MyForum.service.CommentService;
 import MyForum.service.PostService;
+import MyForum.util.CommonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +39,7 @@ public class CommentController {
         if(currentPage == null || currentPage <= 0){
             currentPage = 1;
         }
-        Page<Comment> page = commentService.getCommentListByPostId(postId, currentPage);
+        Page<CommentDTO> page = commentService.getCommentListByPostId(postId, currentPage);
         model.addAttribute("page",page);
 
         // 偷懒 主要不知道如何复用上一个请求获得的post 可以通过缓存减少损耗？
@@ -61,7 +64,7 @@ public class CommentController {
         if(currentPage == null || currentPage <= 0){
             currentPage = 1;
         }
-        Page<Comment> page = commentService.getCommentListByUserId(userId, currentPage);
+        Page<CommentDTO> page = commentService.getCommentListByUserId(userId, currentPage);
         model.addAttribute("page",page);
         model.addAttribute("userId",userId);
 

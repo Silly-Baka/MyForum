@@ -3,6 +3,7 @@ package MyForum.service.impl;
 import MyForum.DTO.ConversationDTO;
 import MyForum.DTO.Page;
 import MyForum.DTO.UserDTO;
+import MyForum.common.UserHolder;
 import MyForum.mapper.ConversationMapper;
 import MyForum.mapper.MessageMapper;
 import MyForum.mapper.UserMapper;
@@ -11,11 +12,14 @@ import MyForum.pojo.Message;
 import MyForum.pojo.User;
 import MyForum.service.MessageService;
 import cn.hutool.core.bean.BeanUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +35,7 @@ import static MyForum.util.MyForumConstant.MESSAGE_TYPE_LETTER;
  * Description：
  **/
 @Service
+@Slf4j
 public class MessageServiceImpl implements MessageService {
 
     @Autowired
@@ -99,5 +104,52 @@ public class MessageServiceImpl implements MessageService {
 
         page.setRecords(Collections.singletonList(conversationDTO));
         return page;
+    }
+
+    @Override
+    @Transactional
+    public boolean sendLetter(String toUserName, String content) {
+        UserDTO fromUser = UserHolder.getCurrentUser();
+
+        User toUser = userMapper.selectUserByUsername(toUserName);
+
+        // 目标用户不存在
+        if(toUser == null){
+            return false;
+        }
+        // 先查找两个用户是否曾存在对话
+        Conversation conversation = conversationMapper.selectConversationByUserId(fromUser.getId(), toUser.getId());
+        // 若不存在 则需创建一个新的对话 并存入数据库
+        if(conversation == null){
+            conversation = new Conversation();
+            conversation.setUser1Id(fromUser.getId());
+            conversation.setUser2Id(toUser.getId());
+            conversation.setLetterCount(0);
+            conversation.setNotReadLetterCount(0);
+            conversationMapper.insertConversation(conversation);
+        }
+        Message message = new Message();
+        message.setFromId(fromUser.getId());
+        message.setToId(toUser.getId());
+        message.setContent(content);
+        message.setCreateTime(LocalDateTime.now());
+        message.setMessageType(MESSAGE_TYPE_LETTER);
+        message.setEntityId(conversation.getId());
+        message.setStatus(0);
+
+        messageMapper.addMessage(message);
+
+        // 加入私信成功 更新会话
+        conversation.setLetterCount(conversation.getLetterCount()+1);
+        conversation.setNewestMessageId(message.getId());
+        conversation.setNotReadLetterCount(conversation.getNotReadLetterCount()+1);
+        conversationMapper.updateConversation(conversation);
+
+        return true;
+    }
+
+    @Override
+    public void addMessage(Message message) {
+        messageMapper.addMessage(message);
     }
 }

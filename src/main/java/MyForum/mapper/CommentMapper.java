@@ -16,8 +16,10 @@ import java.util.List;
  **/
 @Mapper
 public interface CommentMapper {
-    List<Comment> getCommentListByTypeAndEntityId(@Param("type") Integer type, @Param("entityId") Long entityId,
+    List<Comment> selectCommentListByTypeAndEntityId(@Param("type") Integer type, @Param("entityId") Long entityId,
                                                   @Param("offset") Integer offset,@Param("pageSize") Integer pageSize);
+
+    Comment selectCommentById(Long id);
 
     Integer getCount(@Param("userId") Long userId,@Param("type") Integer type, @Param("entityId") Long entityId);
 

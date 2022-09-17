@@ -49,24 +49,8 @@ public class Comment implements Serializable {
      * 评论创建时间
      */
     private LocalDateTime createTime;
-
-
     /**
-     * 发出该评论的作者名
+     * 点赞数
      */
-    private String username;
-
-    /**
-     * 二级评论列表 （只有一级评论才有）
-     */
-    private List<Comment> commentList;
-    /**
-     * 回复目标用户的用户名
-     */
-    private String targetName;
-    /**
-     * 评论所在帖子的标题
-     */
-    private String postTitle;
-
+    private Integer likeCount;
 }

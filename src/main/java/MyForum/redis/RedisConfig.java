@@ -1,5 +1,6 @@
-package MyForum.common;
+package MyForum.redis;
 
+import MyForum.common.JacksonObjectMapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +18,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-import static MyForum.util.RedisConstant.*;
+import static MyForum.redis.RedisConstant.*;
 
 
 /**
@@ -38,6 +39,7 @@ public class RedisConfig extends CachingConfigurerSupport {
         //todo  key采用String序列化方式
         redisTemplate.setKeySerializer(RedisSerializer.string());
         redisTemplate.setHashKeySerializer(RedisSerializer.string());
+
         //todo  value采用json序列化方式
 //        // 定义一个json序列化器
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(new JacksonObjectMapper());

@@ -38,12 +38,6 @@ public interface PostMapper {
                            @Param("pageSize") Integer pageSize);
 
     /**
-     * 添加帖子
-     * @param post 帖子
-     */
-    void addPost(Post post);
-
-    /**
      * 根据帖子id获取帖子
      * @param id 帖子id
      * @return 帖子
@@ -56,4 +50,29 @@ public interface PostMapper {
      * @return 帖子列表
      */
     List<Post> getPostListByUserId(Long userId, Integer offset, Integer pageSize);
+
+    /**
+     * 获取帖子的点赞量
+     * @param postId 帖子id
+     * @return 帖子的点赞数
+     */
+    Integer getScoreByPostId(Long postId);
+
+    /**
+     * 按照属性动态更新post
+     */
+    Integer updatePostDynamic(Post post);
+
+    /**
+     * 增加或减少点赞量
+     * @param postId 帖子id
+     * @param incr 为true就自增1 false就自减1
+     */
+    Integer incrScoreByPostId(Long postId,boolean incr);
+
+    /**
+     * 添加帖子
+     * @param post 帖子
+     */
+    void addPost(Post post);
 }

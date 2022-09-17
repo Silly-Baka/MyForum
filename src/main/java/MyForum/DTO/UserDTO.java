@@ -29,4 +29,22 @@ public class UserDTO{
      * 创建时间
      */
     private LocalDateTime createTime;
+
+    /**
+     * 被点赞总数 （在redis中查）
+     */
+    private Integer likedCount;
+
+    /**
+     * 关注数
+     */
+    private Integer followCount;
+    /**
+     * 被关注数
+     */
+    private Integer followedCount;
+    /**
+     * 是否已被当前用户关注
+     */
+    private Boolean isFollowed;
 }

@@ -31,6 +31,10 @@ public class Conversation {
      */
     private Integer letterCount;
     /**
+     * 未读的私信数
+     */
+    private Integer notReadLetterCount;
+    /**
      * 最新消息的id
      */
     private Long newestMessageId;

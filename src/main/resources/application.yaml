@@ -1,5 +1,6 @@
 server:
   port: 8080
+
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
@@ -7,8 +8,10 @@ spring:
     username: root
     password: hjh123123
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   main:
     allow-circular-references: true
+
   mail:
     host: smtp.qq.com
     port: 465
@@ -17,6 +20,7 @@ spring:
     protocol: smtps
     properties:
       mail.stmp.ssl.enable: true
+
   redis:
     port: 6379
     host: 192.168.75.100
@@ -28,21 +32,40 @@ spring:
         min-idle: 1
         time-between-eviction-runs: 100000
     database: 1
+
   servlet:
     multipart:
       max-file-size: 5MB
+
+  rabbitmq:
+    host: 192.168.75.100
+    username: guest
+    password: guest
+    virtual-host: /myforum
+    publisher-returns: true
+    listener:
+      simple:
+        # 手动确认消息
+        acknowledge-mode: manual
+
+
 mybatis:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     lazy-loading-enabled: true
     aggressive-lazy-loading: false
   mapper-locations: classpath:mapper/**/*.xml
+
 logging:
   level:
     Myforum.mapper: debug
 
+# 论坛系统的配置
 MyForum:
+  # 配置路径
   path:
+    # 系统运行的域名
     domain: http://localhost:8080
     user:
+      # 用户头像文件的目录
       headerImagePath: C:\MyForum_local\user_image\

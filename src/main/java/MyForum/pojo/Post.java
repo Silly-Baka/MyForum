@@ -58,5 +58,8 @@ public class Post implements Serializable {
      * 用户信息
      */
     private UserDTO user;
-
+    /**
+     * 当前用户已经点赞
+     */
+    private Boolean isLiked;
 }

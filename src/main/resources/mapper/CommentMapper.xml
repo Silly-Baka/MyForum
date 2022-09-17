@@ -19,9 +19,8 @@
 <!--                    select="MyForum.mapper.CommentMapper.getCommentListByTypeAndEntityId"-->
 <!--                    column="{type=comment_type,entityId=id}"-->
 <!--                    fetchType="eager"/>-->
-        <association property="postTitle" javaType="string" column="title"/>
     </resultMap>
-    <select id="getCommentListByTypeAndEntityId" resultMap="commentMap" parameterType="map" >
+    <select id="selectCommentListByTypeAndEntityId" resultMap="commentMap" parameterType="map" >
         select <include refid="allColumn"/>
         from comment
         where type = #{type} and entity_id = #{entityId}
@@ -30,6 +29,7 @@
             limit #{offset},#{pageSize}
         </if>
     </select>
+
     <select id="getCount" resultType="integer">
         select count(*)
         from comment
@@ -45,6 +45,7 @@
             </if>
         </where>
     </select>
+
     <select id="getCommentListByUserId" resultMap="commentMap">
         select c.id, c.user_id, c.entity_id, c.target_id, c.content, c.status, c.create_time, c.type, p.title
         from comment c
@@ -54,7 +55,13 @@
         limit #{offset},#{pageSize}
     </select>
 
-    <insert id="addComment" keyProperty="id">
+    <select id="selectCommentById" resultMap="commentMap">
+        select <include refid="allColumn"/>
+        from comment
+        where id = #{id}
+    </select>
+
+    <insert id="addComment" keyProperty="id" useGeneratedKeys="true">
         insert into comment (id, user_id, type, entity_id, target_id, content, status, create_time)
         values (#{id},#{userId},#{type},#{entityId},#{targetId},#{content},#{status},#{createTime})
     </insert>

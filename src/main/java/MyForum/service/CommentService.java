@@ -1,9 +1,11 @@
 package MyForum.service;
 
+import MyForum.DTO.CommentDTO;
 import MyForum.DTO.Page;
 import MyForum.pojo.Comment;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Date: 2022/8/30
@@ -19,7 +21,7 @@ public interface CommentService {
      * @param currentPage 当前页号
      * @return 所有评论列表
      */
-    Page<Comment> getCommentListByPostId(Long postId, Integer currentPage);
+    Page<CommentDTO> getCommentListByPostId(Long postId, Integer currentPage);
 
     /**
      * 添加帖子评论
@@ -34,5 +36,5 @@ public interface CommentService {
      * @param currentPage 页号
      * @return 回帖列表
      */
-    Page<Comment> getCommentListByUserId(Long userId,Integer currentPage);
+    Page<CommentDTO> getCommentListByUserId(Long userId,Integer currentPage);
 }

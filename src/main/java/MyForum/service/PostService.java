@@ -22,4 +22,9 @@ public interface PostService {
     Post getPostById(Long postId);
 
     Page<Post> getPostListByUserId(Long userId, Integer currentPage);
+
+    /**
+     * @return true-成功点赞  false-取消点赞
+     */
+    Map<String,Object> likePost(Long postId);
 }

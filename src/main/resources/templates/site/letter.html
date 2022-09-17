@@ -74,8 +74,8 @@
 				<!-- 私信列表 -->
 				<ul class="list-unstyled" th:if="${#lists.size(page.records) > 0}">
 					<li class="media pb-3 pt-3 mb-3 border-bottom position-relative" th:each="conversation:${page.records}">
-						<span class="badge badge-danger">3</span>
-						<a href="profile.html">
+						<span class="badge badge-danger" th:text="${conversation.notReadLetterCount}">3</span>
+						<a th:href="@{|/user/profile/${currentUser.id != conversation.user1Id ? conversation.user1.id : conversation.user2.id}|}">
 							<img th:src="@{|${currentUser.id != conversation.user1Id ? conversation.user1.headerUrl : conversation.user2.headerUrl}|}" class="mr-4 rounded-circle user-header" alt="用户头像" >
 						</a>
 						<div class="media-body">
@@ -95,13 +95,13 @@
 				<!-- 分页 -->
 				<nav class="mt-5">
 					<ul class="pagination justify-content-center">
-						<li class="page-item"><a class="page-link" th:href="@{|/message/list/${userId}/1|}">首页</a></li>
-						<li th:class="|page-item ${page.currentPage > 1 ? '' : 'disabled'}|"><a class="page-link" th:href="@{|/message/list/${userId}/${page.currentPage-1}|}">上一页</a></li>
+						<li class="page-item"><a class="page-link" th:href="@{|/message/conversation/list/${currentUser.id}/1|}">首页</a></li>
+						<li th:class="|page-item ${page.currentPage > 1 ? '' : 'disabled'}|"><a class="page-link" th:href="@{|/message/conversation/list/${currentUser.id}/${page.currentPage-1}|}">上一页</a></li>
 						<li th:class="|page-item ${page.currentPage == index ? 'active' : ''}|" th:each="index:${#numbers.sequence(page.from,page.to)}">
-							<a class="page-link" th:href="@{|/message/list/${userId}/${index}|}" th:text="${index}">1</a>
+							<a class="page-link" th:href="@{|/message/conversation/list/${currentUser.id}/${index}|}" th:text="${index}">1</a>
 						</li>
-						<li th:class="|page-item ${page.currentPage < page.total ? '' : 'disabled'}|"><a class="page-link" th:href="@{|/message/list/${userId}/${page.currentPage+1}|}">下一页</a></li>
-						<li class="page-item"><a class="page-link" th:href="@{|/message/list/${userId}/${page.total}|}">末页</a></li>
+						<li th:class="|page-item ${page.currentPage < page.total ? '' : 'disabled'}|"><a class="page-link" th:href="@{|/message/conversation/list/${currentUser.id}/${page.currentPage+1}|}">下一页</a></li>
+						<li class="page-item"><a class="page-link" th:href="@{|/message/conversation/list/${currentUser.id}/${page.total}|}">末页</a></li>
 					</ul>
 				</nav>
 			</div>
@@ -110,5 +110,6 @@
 		<div th:replace="~{site/common::footer}"></div>
 	</div>
 	<div th:replace="~{site/common::script}"></div>
+	<script th:src="@{/static/js/letter.js}"></script>
 </body>
 </html>

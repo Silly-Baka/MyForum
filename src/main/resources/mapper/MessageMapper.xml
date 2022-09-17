@@ -49,4 +49,9 @@
         from message
         where entity_id = #{entityId} and status != 2
     </select>
+
+    <insert id="addMessage" keyProperty="id" useGeneratedKeys="true">
+        insert into message(from_id, to_id, content, status, create_time, message_type, entity_id)
+        values (#{fromId},#{toId},#{content},#{status},#{createTime},#{messageType},#{entityId})
+    </insert>
 </mapper>

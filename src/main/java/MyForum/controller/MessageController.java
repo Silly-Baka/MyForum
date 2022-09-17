@@ -5,13 +5,16 @@ import MyForum.DTO.Page;
 import MyForum.DTO.UserDTO;
 import MyForum.common.UserHolder;
 import MyForum.pojo.Conversation;
+import MyForum.pojo.Message;
 import MyForum.service.MessageService;
+import MyForum.util.CommonUtil;
+import MyForum.util.MyForumConstant;
+import cn.hutool.core.util.StrUtil;
+import org.aopalliance.intercept.Joinpoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -37,17 +40,16 @@ public class MessageController {
      */
     @GetMapping("/conversation/list/{userId}/{currentPage}")
     public String getConversationList(@PathVariable("userId") Long userId,
-                                 @PathVariable("currentPage") Integer currentPage,
-                                 Model model){
+                                      @PathVariable("currentPage") Integer currentPage,
+                                      Model model){
         if(userId == null){
-            return "";
+            throw new RuntimeException("非法参数！访问失败");
         }
         if(currentPage == null || currentPage <= 0){
             currentPage = 1;
         }
         Page<ConversationDTO> page = messageService.getConversationListByToId(userId,currentPage);
 
-        model.addAttribute("userId",userId);
         model.addAttribute("page", page);
 
         return "site/letter";
@@ -58,7 +60,7 @@ public class MessageController {
                                                 @PathVariable("currentPage") Integer currentPage,
                                                 Model model){
         if(conversationId == null){
-            return "";
+            throw new RuntimeException("非法参数！访问失败");
         }
         if(currentPage == null || currentPage <= 0){
             currentPage = 1;
@@ -67,5 +69,21 @@ public class MessageController {
         model.addAttribute("page",page);
 
         return "site/letter-detail";
+    }
+
+    @PostMapping("/letter")
+    @ResponseBody
+    public String sendLetter(@RequestParam("toUserName") String toUserName,
+                             @RequestParam("content") String content){
+        if(StrUtil.isBlank(toUserName)){
+            return CommonUtil.getJsonString(403,"目标用户的名字不可为空");
+        }
+        if(StrUtil.isBlank(content)){
+            return CommonUtil.getJsonString(403,"消息内容不可为空！");
+        }
+
+        messageService.sendLetter(toUserName, content);
+
+        return CommonUtil.getJsonString(200,"私信发送成功！");
     }
 }

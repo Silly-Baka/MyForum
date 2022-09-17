@@ -30,4 +30,6 @@ public interface MessageMapper {
                                                      @Param("offset") Integer offset, @Param("pageSize") Integer pageSize);
 
     Integer countMessageByEntityId(@Param("entityId") Long entityId);
+
+    Integer addMessage(Message message);
 }

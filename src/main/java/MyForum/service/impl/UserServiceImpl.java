@@ -31,7 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static MyForum.util.MyForumConstant.*;
-import static MyForum.util.RedisConstant.*;
+import static MyForum.redis.RedisConstant.*;
 /**
  * Date: 2022/8/9
  * Time: 20:52
@@ -355,5 +355,42 @@ public class UserServiceImpl implements UserService {
         map.put("success","1");
 
         return map;
+    }
+
+    @Override
+    public UserDTO getUserProfile(Long userId) {
+        // 获取用户信息
+        User user = userMapper.selectUserById(userId);
+        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+
+        // 获取用户被赞的次数
+        Integer likedCount = (Integer) redisTemplate.opsForValue().get(LIKE_USER_TOTAL_KEY + userId);
+        userDTO.setLikedCount(likedCount);
+
+        // 获取用户的关注数 和 被关注数
+        String followCountKey = FOLLOW_LIST_KEY + userId;
+        Long followCount = redisTemplate.opsForSet().size(followCountKey);
+        if(followCount != null){
+            userDTO.setFollowCount(followCount.intValue());
+        }else {
+            userDTO.setFollowCount(666);
+        }
+
+        String followedCountKey = FOLLOWED_BY_LIST_KEY + userId;
+        Long followedCount = redisTemplate.opsForSet().size(followedCountKey);
+        if(followedCount != null){
+            userDTO.setFollowedCount(followedCount.intValue());
+        }else {
+            userDTO.setFollowedCount(666);
+        }
+
+        // 查看当前用户是否已关注该用户
+        // 查询该用户的被关注列表 有无当前用户
+        Long currentUserId = UserHolder.getCurrentUser().getId();
+        Boolean isFollowed = redisTemplate.opsForSet().isMember(followedCountKey, currentUserId);
+
+        userDTO.setIsFollowed(isFollowed);
+
+        return userDTO;
     }
 }

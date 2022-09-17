@@ -4,11 +4,12 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="MyForum.mapper.ConversationMapper">
     <sql id="allColumn">
-        id,user1_id,user2_id,letter_count,newest_message_id
+        id,user1_id,user2_id,letter_count,not_read_letter_count,newest_message_id
     </sql>
     <resultMap id="conversationMap" type="MyForum.pojo.Conversation">
         <id column="id" property="id"/>
         <result column="letter_count" property="letterCount"/>
+        <result column="not_read_letter_count" property="notReadLetterCount"/>
         <result column="newest_message_id" property="newestMessageId"/>
         <result column="user1_id" property="user1Id"/>
         <result column="user2_id" property="user2Id"/>
@@ -17,6 +18,7 @@
         select <include refid="allColumn"/>
         from conversation
         where user1_id = #{userId} or user2_id = #{userId}
+        limit #{offset},#{pageSize}
     </select>
 
     <select id="selectCountByUserId" resultType="int">
@@ -31,6 +33,14 @@
         where id = #{id}
     </select>
 
+    <select id="selectConversationByUserId" resultMap="conversationMap">
+        select <include refid="allColumn"/>
+        from conversation
+        where user1_id = #{user1Id} and user2_id = #{user2Id}
+        or user1_id = #{user2Id} and user2_id = #{user1Id}
+        limit 0,1
+    </select>
+
     <update id="updateConversationLetterCount">
         update conversation c
         set c.letter_count = (
@@ -39,4 +49,45 @@
             where message_type = 0 and entity_id = c.id and status != 2
             )
     </update>
+
+    <update id="updateConversationNotReadLetterCount">
+        update conversation c
+        set c.not_read_letter_count = ifnull(
+            (
+                select count(*)
+                from message m
+                where m.message_type = 0 and m.status = 0
+                group by m.entity_id
+                having m.entity_id = c.id
+                ),
+            0
+            )
+    </update>
+
+    <update id="updateConversation">
+        update conversation
+        <trim prefix="set" suffixOverrides=",">
+            <if test="user1Id != null">
+                user1_id = #{user1Id},
+            </if>
+            <if test="user2Id != null">
+                user2_id = #{user2Id},
+            </if>
+            <if test="letterCount != null">
+                letter_count = #{letterCount},
+            </if>
+            <if test="notReadLetterCount != null">
+                not_read_letter_count = #{notReadLetterCount},
+            </if>
+            <if test="newestMessageId != null">
+                newest_message_id = #{newestMessageId}
+            </if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <insert id="insertConversation" keyProperty="id" useGeneratedKeys="true">
+        insert into conversation(user1_id,user2_id)
+        values (#{user1Id},#{user2Id})
+    </insert>
 </mapper>

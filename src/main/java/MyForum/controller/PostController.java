@@ -1,5 +1,6 @@
 package MyForum.controller;
 
+import MyForum.DTO.CommentDTO;
 import MyForum.DTO.Page;
 import MyForum.DTO.UserDTO;
 import MyForum.common.UserHolder;
@@ -14,7 +15,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Date: 2022/8/8
@@ -86,12 +89,12 @@ public class PostController {
     @GetMapping("/post/{postId}")
     public String getPostById(@PathVariable("postId") Long postId, Model model){
         if(postId == null){
-            return "";
+            throw new RuntimeException("非法参数！访问失败");
         }
         Post post = postService.getPostById(postId);
         model.addAttribute("post",post);
 
-        Page<Comment> page = commentService.getCommentListByPostId(postId, 1);
+        Page<CommentDTO> page = commentService.getCommentListByPostId(postId, 1);
         model.addAttribute("page",page);
 
         return "site/discuss-detail";
@@ -103,7 +106,7 @@ public class PostController {
                                       Model model){
         //todo 后面再统一处理异常页面
         if(userId == null){
-            return "";
+            throw new RuntimeException("非法参数！访问失败");
         }
         if(currentPage == null || currentPage <= 0){
             currentPage = 1;
@@ -113,5 +116,24 @@ public class PostController {
         model.addAttribute("userId",userId);
 
         return "site/my-post";
+    }
+
+    /**
+     * 点赞帖子
+     */
+    @GetMapping("/post/like/{postId}")
+    @ResponseBody
+    public String likePost(@PathVariable("postId") Long postId){
+
+        if(UserHolder.getCurrentUser() == null){
+            return CommonUtil.getJsonString(0,"点赞失败！用户尚未登录！");
+        }
+        if(postId == null){
+            return CommonUtil.getJsonString(0,"点赞失败！参数不能为空");
+        }
+
+        Map<String, Object> map = postService.likePost(postId);
+
+        return CommonUtil.getJsonString(200,"点赞操作成功",map);
     }
 }

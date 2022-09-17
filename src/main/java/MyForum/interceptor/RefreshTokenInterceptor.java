@@ -15,8 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.util.concurrent.TimeUnit;
 
-import static MyForum.util.RedisConstant.LOGIN_TOKEN_EXPIRED_TIME;
-import static MyForum.util.RedisConstant.LOGIN_TOKEN_KEY;
+import static MyForum.redis.RedisConstant.*;
 
 /**
  * Date: 2022/8/17
@@ -51,8 +50,12 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
             return true;
         }
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
-        UserHolder.addUser(userDTO);
 
+        // 从redis中获取用户被点赞总数 并设置到用户信息中
+        Integer likedCount = (Integer) redisTemplate.opsForValue().get(LIKE_USER_TOTAL_KEY+userDTO.getId());
+        userDTO.setLikedCount(likedCount);
+
+        UserHolder.addUser(userDTO);
         //放到请求域当中 方便前端使用
         request.setAttribute("currentUser",user);
 

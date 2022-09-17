@@ -38,7 +38,7 @@ public class Message {
      */
     private LocalDateTime createTime;
     /**
-     * 消息类型  0-私信  1-评论通知  2-关注通知
+     * 消息类型  0-私信  1-关注通知  2-点赞通知  3-评论通知
      */
     private Integer messageType;
     /**

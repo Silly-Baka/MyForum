@@ -78,4 +78,11 @@ public interface UserService {
      * @return 操作结果
      */
     Map<String,Object> changePassword(String oldPassword,String newPassword,String confirmPassword);
+
+    /**
+     * 获取用户首页的信息
+     * @param userId 用户id
+     * @return 用户首页信息
+     */
+    UserDTO getUserProfile(Long userId);
 }

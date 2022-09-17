@@ -6,11 +6,10 @@ import MyForum.mapper.UserMapper;
 import MyForum.pojo.User;
 import MyForum.service.UserService;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +39,9 @@ public class UserController {
     // 偷懒用mapper
     @Autowired
     private UserMapper userMapper;
+    // 偷懒
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
 
 
     /**
@@ -193,15 +195,13 @@ public class UserController {
      * 获取指定用户的主页
      */
     @GetMapping("/profile/{userId}")
-    public String getProfilePage(@PathVariable("userId") Long userId, Model model){
+    public String profile(@PathVariable("userId") Long userId, Model model){
         if(userId == null){
-            return "";
+            throw new RuntimeException("非法参数！访问失败");
         }
-        // 这里偷懒直接用mapper获取用户信息
-        User user = userMapper.selectUserById(userId);
-        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        UserDTO userProfile = userService.getUserProfile(userId);
 
-        model.addAttribute("user",userDTO);
+        model.addAttribute("user",userProfile);
 
         return "site/profile";
     }

@@ -29,7 +29,7 @@
 				</h6>
 				<!-- 作者 -->
 				<div class="media pb-3 border-bottom">
-					<a href="profile.html">
+					<a th:href="@{|/user/profile/${post.user.id}|}">
 						<img th:src="@{|${post.user.headerUrl}|}" class="align-self-start mr-4 rounded-circle user-header" alt="用户头像" >
 					</a>
 					<div class="media-body">
@@ -37,7 +37,11 @@
 						<div class="text-muted mt-3">
 							发布于 <b th:text="${post.createTime}">2019-04-15 15:32:18</b>
 							<ul class="d-inline float-right">
-								<li class="d-inline ml-2"><a href="#" class="text-primary" th:text="|赞 ${post.score}|">赞 11</a></li>
+								<li class="d-inline ml-2">
+									<a href="#" onclick="likePost()" th:class="${post.isLiked == true ? 'text-danger' : 'text-primary'}" id="likePostBtn">
+										<b id="postScore" th:text="${post.isLiked == true ? '已赞' : '点赞'}">已赞</b>  <i th:text="${post.score}">666</i>
+									</a>
+								</li>
 								<li class="d-inline ml-2">|</li>
 								<li class="d-inline ml-2"><a href="#replyform" class="text-primary" th:text="|回帖 ${post.commentCount}|">回帖 7</a></li>
 							</ul>
@@ -70,11 +74,11 @@
 					<!-- 第1条回帖 -->
 					<li class="media pb-3 pt-3 mb-3 border-bottom" th:each="comment:${page.records}">
 						<a href="profile.html">
-							<img src="http://images.nowcoder.com/head/2t.png" class="align-self-start mr-4 rounded-circle user-header" alt="用户头像" >
+							<img th:src="@{|${comment.user.headerUrl}|}" class="align-self-start mr-4 rounded-circle user-header" alt="用户头像" >
 						</a>
 						<div class="media-body">
 							<div class="mt-0">
-								<span class="font-size-12 text-success" th:text="${comment.username}">掉脑袋切切</span>
+								<span class="font-size-12 text-success" th:text="${comment.user.username}">掉脑袋切切</span>
 								<span class="badge badge-secondary float-right floor">1#</span>
 							</div>
 							<div class="mt-2" th:text="${comment.content}">
@@ -83,7 +87,12 @@
 							<div class="mt-4 text-muted font-size-12">
 								<span>发布于 <b th:text="${comment.createTime}">2019-04-15 15:32:18</b></span>
 								<ul class="d-inline float-right">
-									<li class="d-inline ml-2"><a href="#" class="text-primary">赞(1)</a></li>
+									<li class="d-inline ml-2">
+										<a href="#" th:class="${comment.isLiked == true ? 'text-danger' : 'text-primary'}" th:onclick="likeComment([[${comment.id}]],[[${comment.user.id}]])">
+											<b th:text="${comment.isLiked == true ? '已赞 ' : '点赞 '}">点赞</b>
+											<i th:text="${comment.likeCount}">赞的数量</i>
+										</a>
+									</li>
 									<li class="d-inline ml-2">|</li>
 									<li class="d-inline ml-2"><a href="#" class="text-primary" th:text="|回复 (${comment.commentList!=null ? #lists.size(comment.commentList) : '0'})|">回复(2)</a></li>
 								</ul>
@@ -94,10 +103,10 @@
 								<li class="pb-3 pt-3 mb-3 border-bottom" th:each="subComment:${comment.commentList}">
 									<div>
 										<span th:if="${subComment.targetId == 0}">
-											<b class="text-info" th:text="${subComment.username}">寒江雪</b>:&nbsp;&nbsp;
+											<b class="text-info" th:text="${subComment.user.username}">寒江雪</b>:&nbsp;&nbsp;
 										</span>
 										<span th:if="${subComment.targetId != 0}">
-											<i class="text-info" th:text="${subComment.username}" >Sissi</i> 回复 <b class="text-info" th:text="${subComment.targetName}">寒江雪</b>:&nbsp;&nbsp;
+											<i class="text-info" th:text="${subComment.user.username}" >Sissi</i> 回复 <b class="text-info" th:text="${subComment.targetUser.username}">寒江雪</b>:&nbsp;&nbsp;
 										</span>
 
 										<span th:text="${subComment.content}">这个是直播时间哈，觉得晚的话可以直接看之前的完整录播的~</span>
@@ -105,13 +114,18 @@
 									<div class="mt-3">
 										<span th:text="${subComment.createTime}">2019-04-15 15:32:18</span>
 										<ul class="d-inline float-right">
-											<li class="d-inline ml-2"><a href="#" class="text-primary">赞(1)</a></li>
+											<li class="d-inline ml-2">
+												<a href="#" th:class="${comment.isLiked == true ? 'text-danger' : 'text-primary'}" th:onclick="likeComment([[${subComment.id}]],[[${subComment.user.id}]])">
+													<b th:text="${subComment.isLiked == true ? '已赞 ' : '点赞 '}">点赞</b>
+													<i th:text="${subComment.likeCount}">赞的数量</i>
+												</a>
+											</li>
 											<li class="d-inline ml-2">|</li>
 											<li class="d-inline ml-2"><a href="#huifu01" data-toggle="collapse" class="text-primary">回复</a></li>
 										</ul>
 										<div id="huifu01" class="mt-4 collapse">
 											<div>
-												<input type="text" class="input-size" th:placeholder="|回复${subComment.username}|"/>
+												<input type="text" class="input-size" th:placeholder="|回复${subComment.user.username}|"/>
 											</div>
 											<div class="text-right mt-2">
 												<button type="button" class="btn btn-primary btn-sm" onclick="#">&nbsp;&nbsp;回&nbsp;&nbsp;复&nbsp;&nbsp;</button>
@@ -163,5 +177,64 @@
 		<div th:replace="~{site/common::footer}"></div>
 	</div>
 	<div th:replace="~{site/common::script}"></div>
+	<script th:inline="javascript">
+		function likePost(){
+			var postId = [[${post.id}]];
+			var postUserId = [[${post.userId}]]
+			console.log(postId);
+			axios({
+				url: "http://localhost:8080/common/like/1/" + postId + "?entityUserId=" + postUserId ,
+				method: "GET"
+			}).then(function (res){
+				var data = res.data;
+				// 点赞失败
+				if(data.code == 0){
+					alert(data.msg);
+				}else {
+					if(data.likeStatus == true){
+						$("#likePostBtn").children("b").text("已赞");
+						$("#likePostBtn").removeClass('text-primary');
+						$("#likePostBtn").addClass('text-danger')
+					}else {
+						$("#likePostBtn").children("b").text("点赞");
+						$("#likePostBtn").removeClass('text-danger')
+						$("#likePostBtn").addClass('text-primary');
+					}
+					$("#likePostBtn").children("i").text(data.likeCount);
+				}
+			})
+		}
+
+		// 点赞评论
+		function likeComment(commentId,commentUserId){
+
+			var obj = event.currentTarget;
+
+			console.log(commentId);
+			console.log(commentUserId);
+			axios({
+				url: "http://localhost:8080/common/like/2/" + commentId + "?entityUserId=" + commentUserId,
+				method: "GET"
+			}).then(function (res){
+				var data = res.data;
+				// 点赞失败
+				if(data.code == 0){
+					alert(data.msg);
+				}else {
+					if(data.likeStatus == true){
+
+						$(obj).children("b").text("已赞");
+						$(obj).removeClass('text-primary');
+						$(obj).addClass('text-danger')
+					}else {
+						$(obj).children("b").text("点赞");
+						$(obj).removeClass('text-danger')
+						$(obj).addClass('text-primary');
+					}
+					$(obj).children("i").text(data.likeCount);
+				}
+			})
+		}
+	</script>
 </body>
 </html>
