@@ -39,6 +39,9 @@ public class ServiceLogAscept {
     public void before(JoinPoint joinPoint){
         // 通过请求对象获得调用者的ip地址
         ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (servletRequestAttributes == null){
+            return;
+        }
         HttpServletRequest request = servletRequestAttributes.getRequest();
         String ip = request.getRemoteHost();
         // 日志内容： ip + 时间 + 调用接口

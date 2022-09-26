@@ -1,6 +1,7 @@
 package MyForum.controller;
 
 import MyForum.DTO.ConversationDTO;
+import MyForum.DTO.MessageDTO;
 import MyForum.DTO.Page;
 import MyForum.DTO.UserDTO;
 import MyForum.common.UserHolder;
@@ -17,6 +18,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+
+import static MyForum.util.MyForumConstant.MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME;
 
 /**
  * Date: 2022/9/1
@@ -85,5 +89,43 @@ public class MessageController {
         messageService.sendLetter(toUserName, content);
 
         return CommonUtil.getJsonString(200,"私信发送成功！");
+    }
+
+    // 获得当前用户的系统通知概要
+    @GetMapping("/notice/summary")
+    public String getNoticeMessageSummary(Model model){
+        UserDTO currentUser = UserHolder.getCurrentUser();
+        if(currentUser == null){
+            throw new RuntimeException("尚未登录，无法获取系统通知列表！");
+        }
+        Map<String,Object> map = messageService.getNoticeMessageSummary(currentUser.getId());
+        model.addAttribute("map",map);
+
+        return "site/notice";
+    }
+
+    @GetMapping("/notice/{messageType}/list/{currentPage}")
+    public String getNoticeMessageList(@PathVariable("messageType") Integer messageType,
+                                       @PathVariable("currentPage") Integer currentPage,
+                                       Model model){
+        if(messageType == null){
+            throw new RuntimeException("参数错误，无法查询");
+        }
+        UserDTO currentUser = UserHolder.getCurrentUser();
+        if(currentUser == null){
+            throw new RuntimeException("尚未登录，无法获得通知列表");
+        }
+
+        Page<MessageDTO> page = messageService.getNoticeMessageList(currentUser.getId(), messageType, currentPage);
+
+        String typeName = MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.get(messageType);
+        // 暂存messageType到客户端 方便复用
+        model.addAttribute("messageType",messageType);
+
+        model.addAttribute("page",page);
+
+        model.addAttribute("typeName",typeName);
+
+        return "site/notice-detail";
     }
 }

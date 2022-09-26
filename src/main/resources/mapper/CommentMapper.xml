@@ -47,6 +47,7 @@
     </select>
 
     <select id="getCommentListByUserId" resultMap="commentMap">
+        ## 外连接，被驱动表建索引，因为驱动表一定会遍历全表
         select c.id, c.user_id, c.entity_id, c.target_id, c.content, c.status, c.create_time, c.type, p.title
         from comment c
         left join post_detail p
@@ -59,6 +60,11 @@
         select <include refid="allColumn"/>
         from comment
         where id = #{id}
+    </select>
+
+    <select id="getAllCommentIds" resultType="long">
+        select distinct id
+        from comment
     </select>
 
     <insert id="addComment" keyProperty="id" useGeneratedKeys="true">

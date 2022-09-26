@@ -47,6 +47,7 @@ spring:
       simple:
         # 手动确认消息
         acknowledge-mode: manual
+    publisher-confirm-type: correlated
 
 
 mybatis:

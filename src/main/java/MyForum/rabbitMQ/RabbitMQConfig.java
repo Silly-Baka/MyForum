@@ -1,9 +1,11 @@
 package MyForum.rabbitMQ;
 
 import MyForum.common.JacksonObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,6 +26,7 @@ import java.util.concurrent.TimeUnit;
  * Description： RabbitMQ的配置类
  **/
 @Configuration
+@Slf4j
 public class RabbitMQConfig {
 
     private final static ThreadPoolExecutor CONSUMER_THREAD_POOL;
@@ -39,6 +42,43 @@ public class RabbitMQConfig {
         rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter(new JacksonObjectMapper()));
         // 使用默认配置配置工厂
         configurer.configure(rabbitTemplate,connectionFactory);
+
+        // 设置confirm机制的回调函数
+        rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
+            @Override
+            public void confirm(CorrelationData correlationData, boolean ack, String cause) {
+                // 没有成功投递给交换机 重新投递
+                ReturnedMessage returnedMessage = correlationData.getReturned();
+                String exchange = returnedMessage.getExchange();
+                if(!ack){
+                    log.info("消息发送失败，目标交换机为：{} ",exchange);
+                    log.info("消息将会被重新投递...");
+                    Message message = returnedMessage.getMessage();
+                    String routingKey = returnedMessage.getRoutingKey();
+
+                    rabbitTemplate.convertAndSend(exchange,routingKey,message,correlationData);
+
+                }else {
+                    log.info("消息发送成功，目标交换机为：{} ",exchange);
+                }
+            }
+        });
+        // 设置return机制的回调函数
+        rabbitTemplate.setReturnsCallback(new RabbitTemplate.ReturnsCallback() {
+            @Override
+            public void returnedMessage(ReturnedMessage returned) {
+                String exchange = returned.getExchange();
+                String routingKey = returned.getRoutingKey();
+
+                log.info("消息投递给队列失败，交换机为：{}，路由key为:{}",exchange,routingKey);
+
+                CorrelationData correlationData = new CorrelationData();
+                // 发送给业务用消息队列
+                correlationData.setReturned(returned);
+                rabbitTemplate.convertAndSend(exchange,routingKey,returned.getMessage());
+            }
+        });
+
         return rabbitTemplate;
     }
     @Bean
@@ -89,8 +129,8 @@ public class RabbitMQConfig {
     @Bean("timing_queue")
     public Queue timingQueue(){
         return QueueBuilder.durable("timing_queue")
-                .deadLetterExchange("timing_dead_queue")
-                .deadLetterRoutingKey("timing_dead.#")
+                .deadLetterExchange("dead_exchange")
+                .deadLetterRoutingKey("timing.#")
                 .build();
     }
     // 延时队列 -- 存消息用死信队列
@@ -129,6 +169,20 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(checkQueue)
                 .to(myforumExchange)
                 .with("check.#")
+                .noargs();
+    }
+
+    // 生产者重发消息用消息队列
+    @Bean("resend_queue")
+    public Queue resendQueue(){
+        return QueueBuilder.durable("resend_queue").build();
+    }
+    @Bean
+    public Binding bindingResend(@Qualifier("myforum_exchange") Exchange myforumExchange,
+                                 @Qualifier("resend_queue") Queue resendQueue){
+        return BindingBuilder.bind(resendQueue)
+                .to(myforumExchange)
+                .with("resend.#")
                 .noargs();
     }
 }

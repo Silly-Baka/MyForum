@@ -1,6 +1,8 @@
 package MyForum.service.impl;
 
 import MyForum.common.UserHolder;
+import MyForum.pojo.EventMessage;
+import MyForum.rabbitMQ.EventMessageProducer;
 import MyForum.service.CommonService;
 import cn.hutool.core.util.StrUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,12 +11,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static MyForum.util.MyForumConstant.ENTITY_TYPE_REDIS_LIKE_KEY_MAP;
 import static MyForum.redis.RedisConstant.*;
+import static MyForum.util.MyForumConstant.*;
 
 /**
  * Date: 2022/9/5
@@ -26,8 +29,11 @@ import static MyForum.redis.RedisConstant.*;
 @Service
 public class CommonServiceImpl implements CommonService {
 
-    @Autowired
+    @Resource
     private RedisTemplate<String,Object> redisTemplate;
+
+    @Resource
+    private EventMessageProducer eventMessageProducer;
 
     private static final DefaultRedisScript<Boolean> FOLLOW_SCRIPT;
     static {
@@ -48,6 +54,16 @@ public class CommonServiceImpl implements CommonService {
 
     @Override
     public Map<String, Object> like(Integer entityType, Long entityId, Long entityUserId) {
+        //todo 有待使用aop优化 缩减业务代码边幅
+        // 发送消息给消息队列
+        //获取当前用户信息
+        Long currentUserId = UserHolder.getCurrentUser().getId();
+        Map<String,Object> prop = new HashMap<>();
+        prop.put("entityId",entityId);
+        EventMessage eventMessage = eventMessageProducer.createEventMessage(EVENT_TYPE_LIKE, currentUserId, entityUserId, prop);
+        eventMessageProducer.sendMessage(eventMessage);
+
+        // -----------
         String keyPrefix = ENTITY_TYPE_REDIS_LIKE_KEY_MAP.getOrDefault(entityType,null);
         if(StrUtil.isBlank(keyPrefix)){
             throw new RuntimeException("服务端不存在该实体或实体类型参数异常！entityType = " + entityType);
@@ -57,8 +73,6 @@ public class CommonServiceImpl implements CommonService {
         String likeKey = ENTITY_TYPE_REDIS_LIKE_KEY_MAP.get(entityType) + entityId;
         // 被点赞者的key
         String likeTotalKey = LIKE_USER_TOTAL_KEY + entityUserId;
-        // 获取当前用户信息
-        Long currentUserId = UserHolder.getCurrentUser().getId();
         // 查询redis 看是否已点赞
         Boolean isLiked = redisTemplate.opsForSet().isMember(likeKey, currentUserId);
         //todo 已优化成lua脚本
@@ -95,8 +109,14 @@ public class CommonServiceImpl implements CommonService {
         // 否则就关注 增加本用户的关注列表 和被关注用户的关注列表 并且返回 1
     @Override
     public Map<String, Object> follow(Long userId) {
-        Map<String,Object> result = new HashMap<>();
+        //todo 有待优化成aop
+        // 发送消息给消息队列
         Long currentUserId = UserHolder.getCurrentUser().getId();
+        EventMessage eventMessage = eventMessageProducer.createEventMessage(EVENT_TYPE_FOLLOW, currentUserId, userId, null);
+        eventMessageProducer.sendMessage(eventMessage);
+
+
+        Map<String,Object> result = new HashMap<>();
         // 被关注用户的被关注列表key
         String followedKey = FOLLOWED_BY_LIST_KEY + userId;
         // 当前用户的关注列表key

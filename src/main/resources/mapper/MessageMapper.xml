@@ -50,6 +50,28 @@
         where entity_id = #{entityId} and status != 2
     </select>
 
+    <select id="selectLatestMessageByToIdAndType" resultMap="messageMap">
+        select <include refid="allColumn"/>
+        from message
+        where to_id = #{toId} and message_type = #{messageType}
+        order by create_time desc
+        limit 1
+    </select>
+
+    <select id="countMessageByToIdAndType" resultType="int">
+        select count(*)
+        from message
+        where to_id = #{toId} and message_type = #{messageType}
+    </select>
+
+    <select id="selectMessageListByToIdAndType" resultMap="messageMap">
+        select <include refid="allColumn"/>
+        from message
+        where to_id = #{toId} and message_Type = #{messageType}
+        order by create_time desc
+        limit #{offset},#{pageSize}
+    </select>
+
     <insert id="addMessage" keyProperty="id" useGeneratedKeys="true">
         insert into message(from_id, to_id, content, status, create_time, message_type, entity_id)
         values (#{fromId},#{toId},#{content},#{status},#{createTime},#{messageType},#{entityId})

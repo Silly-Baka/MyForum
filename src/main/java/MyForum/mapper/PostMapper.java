@@ -71,6 +71,12 @@ public interface PostMapper {
     Integer incrScoreByPostId(Long postId,boolean incr);
 
     /**
+     * 获得所有帖子的id
+     * @return 所有帖子的id列表
+     */
+    List<Long> getAllPostId();
+
+    /**
      * 添加帖子
      * @param post 帖子
      */

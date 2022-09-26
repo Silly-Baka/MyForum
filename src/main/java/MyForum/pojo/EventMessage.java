@@ -1,6 +1,7 @@
 package MyForum.pojo;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
@@ -12,6 +13,8 @@ import java.util.Map;
  * Description：事件消息，用于记录点赞、关注、评论等事件
  * // 此类用建造者模式创建 练习
  **/
+@Data
+@NoArgsConstructor
 public class EventMessage {
     /**
      * 事件的唯一id

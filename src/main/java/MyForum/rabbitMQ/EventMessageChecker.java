@@ -5,8 +5,10 @@ import cn.hutool.core.util.BooleanUtil;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -42,24 +44,27 @@ public class EventMessageChecker {
                                   // 通过Header注解 获取消息从哪个队列接收
                                   @Header(AmqpHeaders.CONSUMER_QUEUE) String queueName) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
-        log.info("检查服务已监听到消息:{}",eventMessage);
+        log.info("检查服务已监听到来自队列 {} 的消息:{}",queueName,eventMessage);
 
         String redisKey = EVENT_MESSAGE_CHECK_KEY;
         try {
             // 如果是来自确认消息队列 则直接入库
             if("check_queue".equals(queueName)){
 
-                redisTemplate.opsForHash().put(redisKey,eventMessage.getEventId(),eventMessage);
+                redisTemplate.opsForHash().put(redisKey,String.valueOf(eventMessage.getEventId()),eventMessage);
 
             }else if("timing_dead_queue".equals(queueName)){
             // 如果来自延迟队列 则先检查库中有无该消息
-                Boolean hasMessage = redisTemplate.opsForHash().hasKey(redisKey, eventMessage.getEventId());
+                Boolean hasMessage = redisTemplate.opsForHash().hasKey(redisKey,String.valueOf(eventMessage.getEventId()));
                 // 若库中有该消息 则丢弃消息（无操作）
                 if(BooleanUtil.isTrue(hasMessage)){
 
                 }else {
-                // 若无，则发送消息给生产者，让其重新发送
+                // 若无，则发送消息给重发队列 --- 让生产者接收，并重新发送
+                    CorrelationData correlationData = new CorrelationData(String.valueOf(eventMessage.getEventId()));
+                    correlationData.setReturned(new ReturnedMessage(null,666,"","myforum_exchange","resend" ));
 
+                    rabbitTemplate.convertAndSend("myforum_exchange","resend", eventMessage,correlationData);
                 }
             }
             // 确认消息已消费

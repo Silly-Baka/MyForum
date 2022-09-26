@@ -148,10 +148,11 @@ public class UserServiceImpl implements UserService {
         }
         // 检测是否有同一邮箱的用户
         User anotherUser = userMapper.selectUserByEmail(email);
-        if(anotherUser != null){
-            map.put("emailMsg","该邮箱已注册！请更换邮箱");
-            return map;
-        }
+        //todo 测试 去掉
+//        if(anotherUser != null){
+//            map.put("emailMsg","该邮箱已注册！请更换邮箱");
+//            return map;
+//        }
         String salt = CommonUtil.generateUUID().substring(5);
         user.setSalt(salt);
         // 将密码使用MD5加密

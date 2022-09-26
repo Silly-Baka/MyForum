@@ -1,7 +1,9 @@
 package MyForum.util;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static MyForum.redis.RedisConstant.LIKE_COMMENT_KEY;
 import static MyForum.redis.RedisConstant.LIKE_POST_KEY;
@@ -89,12 +91,29 @@ public class MyForumConstant {
 
     public static final Map<Integer,Integer> EVENT_TYPE_TO_MESSAGE_TYPE_MAP = new HashMap<>();
 
+    public static final Set<Integer> NOTICE_TYPE_SET = new HashSet<>();
+
+    public static final Map<Integer,String> MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME = new HashMap<>();
+
     static {
+        // 初始化 Redis中实体类型和点赞key的映射
         ENTITY_TYPE_REDIS_LIKE_KEY_MAP.put(ENTITY_TYPE_POST,LIKE_POST_KEY);
         ENTITY_TYPE_REDIS_LIKE_KEY_MAP.put(ENTITY_TYPE_COMMENT,LIKE_COMMENT_KEY);
 
+        // 初始化 事件类型和消息类型的映射
         EVENT_TYPE_TO_MESSAGE_TYPE_MAP.put(EVENT_TYPE_COMMENT,MESSAGE_TYPE_COMMENT);
         EVENT_TYPE_TO_MESSAGE_TYPE_MAP.put(EVENT_TYPE_FOLLOW,MESSAGE_TYPE_FOLLOW);
         EVENT_TYPE_TO_MESSAGE_TYPE_MAP.put(EVENT_TYPE_LIKE,MESSAGE_TYPE_LIKE);
+
+        // 初始化 通知类型的总列表
+        NOTICE_TYPE_SET.add(MESSAGE_TYPE_FOLLOW);
+        NOTICE_TYPE_SET.add(MESSAGE_TYPE_LIKE);
+        NOTICE_TYPE_SET.add(MESSAGE_TYPE_COMMENT);
+
+        // 初始化 消息类型和消息类型名的映射
+        MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_LETTER,"letter");
+        MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_FOLLOW,"follow");
+        MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_LIKE,"like");
+        MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_COMMENT,"comment");
     }
 }

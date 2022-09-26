@@ -28,4 +28,9 @@ public interface CommentMapper {
     List<Comment> getCommentListByUserId(@Param("userId") Long userId,
                                          @Param("offset") Integer offset,
                                          @Param("pageSize") Integer pageSize);
+
+    /**
+     * 获取所有评论的id
+     */
+    List<Long> getAllCommentIds();
 }

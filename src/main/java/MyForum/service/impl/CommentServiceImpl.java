@@ -9,8 +9,10 @@ import MyForum.mapper.CommentMapper;
 import MyForum.mapper.PostMapper;
 import MyForum.mapper.UserMapper;
 import MyForum.pojo.Comment;
+import MyForum.pojo.EventMessage;
 import MyForum.pojo.Post;
 import MyForum.pojo.User;
+import MyForum.rabbitMQ.EventMessageProducer;
 import MyForum.service.CommentService;
 import cn.hutool.core.bean.BeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static MyForum.util.MyForumConstant.*;
@@ -37,14 +41,17 @@ import static MyForum.redis.RedisConstant.*;
 @Service
 public class CommentServiceImpl implements CommentService {
 
-    @Autowired
+    @Resource
     private CommentMapper commentMapper;
-    @Autowired
+    @Resource
     private UserMapper userMapper;
     @Resource
     private PostMapper postMapper;
-    @Autowired
+    @Resource
     private RedisTemplate<String,Object> redisTemplate;
+    @Resource
+    private EventMessageProducer eventMessageProducer;
+
 
     @Override
     public Page<CommentDTO> getCommentListByPostId(Long postId, Integer currentPage) {
@@ -152,6 +159,19 @@ public class CommentServiceImpl implements CommentService {
             throw new RuntimeException("参数为空！添加失败");
         }
         UserDTO currentUser = UserHolder.getCurrentUser();
+        Long currentUserId = UserHolder.getCurrentUser().getId();
+
+        //获得该帖子的作者id
+        Post post = postMapper.getPostById(postId);
+        Long userId = post.getUserId();
+
+        //todo 有待优化成aop
+        // 发送消息给消息队列
+        Map<String,Object> prop = new HashMap<>();
+        prop.put("entityId",postId);
+        EventMessage eventMessage = eventMessageProducer.createEventMessage(EVENT_TYPE_COMMENT, currentUserId, userId, prop);
+        eventMessageProducer.sendMessage(eventMessage);
+
         comment.setUserId(currentUser.getId());
         comment.setType(COMMENT_TYPE_FIRST);
         comment.setEntityId(postId);

@@ -32,4 +32,11 @@ public interface MessageMapper {
     Integer countMessageByEntityId(@Param("entityId") Long entityId);
 
     Integer addMessage(Message message);
+
+    Message selectLatestMessageByToIdAndType(@Param("toId") Long toId,@Param("messageType") Integer messageType);
+
+    Integer countMessageByToIdAndType(@Param("toId") Long toId,@Param("messageType") Integer messageType);
+
+    List<Message> selectMessageListByToIdAndType(@Param("toId") Long toId, @Param("messageType") Integer messageType,
+                                                 @Param("offset") Integer offset, @Param("pageSize") Integer pageSize);
 }

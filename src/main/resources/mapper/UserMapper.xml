@@ -48,6 +48,11 @@
         where id = #{userId}
     </select>
 
+    <select id="selectAllUserIds" resultType="long">
+        select distinct id
+        from user
+    </select>
+
     <insert id="addUser" parameterType="MyForum.pojo.User" useGeneratedKeys="true" keyProperty="id">
         insert into user(<include refid="insertColomn"/>)
         values(#{username},#{password},#{salt},#{email},#{type},#{status},#{activationCode},#{headerUrl},#{createTime})

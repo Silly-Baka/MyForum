@@ -5,6 +5,8 @@ import MyForum.pojo.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * Date: 2022/8/9
  * Time: 21:12
@@ -52,4 +54,10 @@ public interface UserMapper {
      * @return
      */
     User selectUserDTOByUserId(@Param("userId") Long userId);
+
+    /**
+     * 获得所有user的id列表
+     * @return id列表
+     */
+    List<Long> selectAllUserIds();
 }

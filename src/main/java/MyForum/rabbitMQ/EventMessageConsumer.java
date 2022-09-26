@@ -5,8 +5,10 @@ import MyForum.pojo.Message;
 import MyForum.service.MessageService;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.concurrent.*;
 
-import static MyForum.util.MyForumConstant.EVENT_TYPE_TO_MESSAGE_TYPE_MAP;
+import static MyForum.util.MyForumConstant.*;
 
 /**
  * Date: 2022/9/16
@@ -82,21 +84,24 @@ public class EventMessageConsumer {
                 message.setCreateTime(LocalDateTime.now());
                 message.setFromId(eventMessage.getOriginId());
                 message.setToId(eventMessage.getTargetId());
-                message.setEntityId((long)eventMessage.getProperties().get("entityId"));
+                if(eventType == EVENT_TYPE_LIKE || eventType == EVENT_TYPE_COMMENT){
+                    message.setEntityId((long)eventMessage.getProperties().get("entityId"));
+                }
 
-                // 放入数据库
+                // 将通知放入数据库
                 messageService.addMessage(message);
 
                 // 向原消息队列发送确认消息
                 channel.basicAck(deliveryTag,false);
 
-                //todo  并且将确认消息 发给 检查用消息队列   ---->  还需创建存放业务记录的表 和 检查用消息队列
-                channel.basicPublish("myforum_exchange","check",null,null);
+                CorrelationData correlationData = new CorrelationData(String.valueOf(eventMessage.getEventId()));
+                correlationData.setReturned(new ReturnedMessage(null,666,"","myforum_exchange","check" ));
+
+                rabbitTemplate.convertAndSend("myforum_exchange","check",eventMessage,correlationData);
 
             } catch (IOException e) {
                 // 业务异常 发送拒绝消息 让消息队列重新发送消息
                 try {
-
                     channel.basicNack(deliveryTag,true,true);
                 } catch (IOException ex) {
                     log.error("服务器发生异常!");

@@ -20,7 +20,7 @@
     <select id="getPostList" resultMap="PostMap">
         select <include refid="allColumn"/>
         from post_detail
-        where status != 2
+        where status = 1 or status = 2
         order by type desc
         limit #{offset},#{pageSize}
     </select>
@@ -37,7 +37,7 @@
     <select id="getHotPosts" resultMap="PostMap">
         select <include refid="allColumn"/>
         from post_detail
-        where status != 2
+        where status = 1 or status = 2
         order by comment_count and score desc
         limit #{offset},#{pageSize}
     </select>
@@ -58,6 +58,11 @@
         select score
         from post_detail
         where id = #{postId}
+    </select>
+    
+    <select id="getAllPostId" resultType="long">
+        select distinct id
+        from post_detail
     </select>
 
     <update id="updatePostDynamic">

@@ -15,9 +15,13 @@
         <result column="user2_id" property="user2Id"/>
     </resultMap>
     <select id="selectConversationListByUserId" resultMap="conversationMap">
-        select <include refid="allColumn"/>
+        (select <include refid="allColumn"/>
         from conversation
-        where user1_id = #{userId} or user2_id = #{userId}
+        where user1_id = #{userId})
+        union all
+        (select <include refid="allColumn"/>
+        from conversation
+        where user2_id = #{userId})
         limit #{offset},#{pageSize}
     </select>
 

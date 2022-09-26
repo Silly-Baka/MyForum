@@ -1,6 +1,7 @@
 package MyForum.service.impl;
 
 import MyForum.DTO.ConversationDTO;
+import MyForum.DTO.MessageDTO;
 import MyForum.DTO.Page;
 import MyForum.DTO.UserDTO;
 import MyForum.common.UserHolder;
@@ -14,18 +15,15 @@ import MyForum.service.MessageService;
 import cn.hutool.core.bean.BeanUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static MyForum.util.MyForumConstant.MESSAGE_TYPE_LETTER;
+import static MyForum.util.MyForumConstant.*;
 
 /**
  * Date: 2022/9/1
@@ -38,14 +36,13 @@ import static MyForum.util.MyForumConstant.MESSAGE_TYPE_LETTER;
 @Slf4j
 public class MessageServiceImpl implements MessageService {
 
-    @Autowired
+    @Resource
     private MessageMapper messageMapper;
-    @Autowired
+    @Resource
     private UserMapper userMapper;
-    @Autowired
+    @Resource
     private ConversationMapper conversationMapper;
-
-    @Autowired
+    @Resource
     private RedisTemplate<String,Object> redisTemplate;
 
     @Override
@@ -151,5 +148,59 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void addMessage(Message message) {
         messageMapper.addMessage(message);
+    }
+
+    @Override
+    public Map<String, Object> getNoticeMessageSummary(Long userId) {
+        Map<String,Object> map = new HashMap<>();
+
+        for (Integer messageType : NOTICE_TYPE_SET) {
+            String typeName = MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.get(messageType);
+            // 获取所有类型的最新通知
+            Message message = messageMapper.selectLatestMessageByToIdAndType(userId, messageType);
+            map.put(typeName+"Message",message);
+            // 获取该类型通知的条数
+            Integer messageCount = messageMapper.countMessageByToIdAndType(userId, messageType);
+            if(messageCount == null){
+                messageCount = 0;
+            }
+            map.put(typeName+"Count",messageCount);
+
+            if(message != null){
+                // 获取通知发起者的名字
+                Long fromId = message.getFromId();
+                User fromUser = userMapper.selectUserById(fromId);
+
+                map.put(typeName+"Username",fromUser.getUsername());
+            }
+        }
+
+        return map;
+    }
+
+    @Override
+    public Page<MessageDTO> getNoticeMessageList(Long toId, Integer messageType, Integer currentPage) {
+        // 获得消息的总条数
+        Integer count = messageMapper.countMessageByToIdAndType(toId, messageType);
+        // 获取分页对象
+        Page<MessageDTO> page = new Page<>(currentPage,count);
+
+        List<Message> messageList = messageMapper.selectMessageListByToIdAndType(toId, messageType, (currentPage - 1) * page.getPageSize(), page.getPageSize());
+        List<MessageDTO> messageDTOList = new ArrayList<>();
+
+        for(Message message:messageList){
+            MessageDTO messageDTO = BeanUtil.copyProperties(message, MessageDTO.class);
+            // 获取消息发出者的消息
+            User fromUser = userMapper.selectUserById(message.getFromId());
+            UserDTO fromUserDTO = BeanUtil.copyProperties(fromUser, UserDTO.class);
+
+            messageDTO.setFromUser(fromUserDTO);
+
+            messageDTOList.add(messageDTO);
+        }
+
+        page.setRecords(messageDTOList);
+
+        return page;
     }
 }
