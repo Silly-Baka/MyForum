@@ -116,4 +116,13 @@ public class MyForumConstant {
         MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_LIKE,"like");
         MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_COMMENT,"comment");
     }
+
+    // 权限管理
+
+    // 普通用户
+    public static final String AUTHORITY_USER = "user";
+    // 管理员
+    public static final String AUTHORITY_ADMIN = "admin";
+    // 版主
+    public static final String AUTHORITY_MODERATOR = "moderator";
 }

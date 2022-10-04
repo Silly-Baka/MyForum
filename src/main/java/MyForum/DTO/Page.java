@@ -1,7 +1,6 @@
 package MyForum.DTO;
 
-import MyForum.common.Config;
-import com.mysql.cj.jdbc.Blob;
+import MyForum.config.Config;
 import lombok.Data;
 
 import java.io.Serializable;

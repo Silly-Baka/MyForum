@@ -47,4 +47,9 @@ public class UserDTO{
      * 是否已被当前用户关注
      */
     private Boolean isFollowed;
+
+    /**
+     * 用户类型
+     */
+    private Integer type;
 }

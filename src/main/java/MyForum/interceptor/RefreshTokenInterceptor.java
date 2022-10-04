@@ -3,16 +3,22 @@ package MyForum.interceptor;
 import MyForum.DTO.UserDTO;
 import MyForum.common.UserHolder;
 import MyForum.pojo.User;
+import MyForum.service.UserService;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static MyForum.redis.RedisConstant.*;
@@ -29,8 +35,10 @@ import static MyForum.redis.RedisConstant.*;
 @Component
 public class RefreshTokenInterceptor implements HandlerInterceptor {
 
-    @Autowired
+    @Resource
     private RedisTemplate<String,Object> redisTemplate;
+    @Resource
+    private UserService userService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -61,6 +69,12 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
 
         // 更新redis中token的过期时间
         redisTemplate.expire(key,LOGIN_TOKEN_EXPIRED_TIME, TimeUnit.MINUTES);
+
+        // 绕过Spring Security的登陆认证 直接将凭证信息放入上下文
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                user, token, userService.getUserAuthority(user.getId())
+        );
+        SecurityContextHolder.setContext(new SecurityContextImpl(authenticationToken));
 
         return true;
     }

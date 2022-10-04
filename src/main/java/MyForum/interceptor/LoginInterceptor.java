@@ -3,12 +3,16 @@ package MyForum.interceptor;
 import MyForum.DTO.UserDTO;
 import MyForum.common.UserHolder;
 import MyForum.pojo.User;
+import MyForum.service.UserService;
+import MyForum.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -23,8 +27,11 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
-    @Autowired
+    @Resource
     private RedisTemplate<String,Object> redisTemplate;
+    @Resource
+    private UserService userService;
+
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {

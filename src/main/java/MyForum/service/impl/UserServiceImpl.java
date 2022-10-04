@@ -17,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.TemplateEngine;
@@ -30,9 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static MyForum.util.MyForumConstant.*;
@@ -221,6 +221,9 @@ public class UserServiceImpl implements UserService {
         String key = LOGIN_TOKEN_KEY + token;
         redisTemplate.delete(key);
 
+        //todo 退出登录时要把上下文中的认证信息删掉 -- 特殊处理 因为没有使用spring security的认证
+        SecurityContextHolder.clearContext();
+
         return USER_LOGOUT_SUCCESS;
     }
 
@@ -407,16 +410,40 @@ public class UserServiceImpl implements UserService {
 
         // 查看当前用户是否已关注该用户
         // 查询该用户的被关注列表 有无当前用户
-        Long currentUserId = UserHolder.getCurrentUser().getId();
+        UserDTO currentUser = UserHolder.getCurrentUser();
+        if(currentUser != null){
 
-        Boolean redisIsFollow = redisTemplate.opsForSet().isMember(followedCountKey, currentUserId);
+            Long currentUserId = currentUser.getId();
 
-        // 等于1就是有这条记录
-        Integer dbIsFollow = followByRecordMapper.selectOneByUserIdAndFollowedId(userId, currentUserId);
+            Boolean redisIsFollow = redisTemplate.opsForSet().isMember(followedCountKey, currentUserId);
 
-        // redis或者db中有关注都行
-        userDTO.setIsFollowed(BooleanUtil.isTrue(redisIsFollow) || dbIsFollow == 1);
+            // 等于1就是有这条记录
+            Integer dbIsFollow = followByRecordMapper.selectOneByUserIdAndFollowedId(userId, currentUserId);
 
+            // redis或者db中有关注都行
+            userDTO.setIsFollowed(BooleanUtil.isTrue(redisIsFollow) || dbIsFollow == 1);
+        }
         return userDTO;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getUserAuthority(Long userId) {
+        User user = userMapper.selectUserById(userId);
+
+        List<GrantedAuthority> authorityList = new ArrayList<>();
+        authorityList.add(new GrantedAuthority() {
+            @Override
+            public String getAuthority() {
+                switch (user.getType()){
+                    case 1:
+                        return AUTHORITY_ADMIN;
+                    case 2:
+                        return AUTHORITY_MODERATOR;
+                    default:
+                        return AUTHORITY_USER;
+                }
+            }
+        });
+        return authorityList;
     }
 }

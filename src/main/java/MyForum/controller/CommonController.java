@@ -158,4 +158,9 @@ public class CommonController {
 
         return CommonUtil.getJsonString(200,"关注成功",result);
     }
+
+    @GetMapping("/denied")
+    public String denied(){
+        return "/error/404";
+    }
 }

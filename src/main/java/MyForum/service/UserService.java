@@ -2,10 +2,12 @@ package MyForum.service;
 
 import MyForum.DTO.UserDTO;
 import MyForum.pojo.User;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -85,4 +87,11 @@ public interface UserService {
      * @return 用户首页信息
      */
     UserDTO getUserProfile(Long userId);
+
+    /**
+     * 根据用户id获得该用户的权限
+     * @param userId 用户id
+     * @return 用户权限级别
+     */
+    Collection<? extends GrantedAuthority> getUserAuthority(Long userId);
 }

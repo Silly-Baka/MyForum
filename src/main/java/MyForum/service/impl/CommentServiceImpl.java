@@ -3,7 +3,7 @@ package MyForum.service.impl;
 import MyForum.DTO.CommentDTO;
 import MyForum.DTO.Page;
 import MyForum.DTO.UserDTO;
-import MyForum.common.Config;
+import MyForum.config.Config;
 import MyForum.common.UserHolder;
 import MyForum.mapper.CommentMapper;
 import MyForum.mapper.PostMapper;
@@ -15,7 +15,6 @@ import MyForum.pojo.User;
 import MyForum.rabbitMQ.EventMessageProducer;
 import MyForum.service.CommentService;
 import cn.hutool.core.bean.BeanUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,7 +145,12 @@ public class CommentServiceImpl implements CommentService {
             commentDTO.setLikeCount(likeCount.intValue());
         }
         // 查询当前用户是否已点赞
-        Boolean isLiked = redisTemplate.opsForSet().isMember(likeKey, currentUser.getId());
+
+        Boolean isLiked = false;
+
+        if (currentUser != null){
+            isLiked = redisTemplate.opsForSet().isMember(likeKey, currentUser.getId());
+        }
         if (isLiked != null) {
             commentDTO.setLiked(isLiked);
         }

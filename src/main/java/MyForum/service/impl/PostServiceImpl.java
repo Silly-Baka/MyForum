@@ -1,7 +1,7 @@
 package MyForum.service.impl;
 
 import MyForum.DTO.UserDTO;
-import MyForum.common.Config;
+import MyForum.config.Config;
 import MyForum.common.UserHolder;
 import MyForum.mapper.PostMapper;
 import MyForum.DTO.Page;
@@ -122,7 +122,11 @@ public class PostServiceImpl implements PostService {
 
         // 查询当前用户是否有点赞该帖子
         UserDTO currentUser = UserHolder.getCurrentUser();
-        Boolean isLiked = redisTemplate.opsForSet().isMember(LIKE_POST_KEY + postId, currentUser.getId());
+
+        Boolean isLiked = false;
+        if(currentUser != null){
+           isLiked = redisTemplate.opsForSet().isMember(LIKE_POST_KEY + postId, currentUser.getId());
+        }
 
         String countKey = LIKE_POST_KEY + postId;
         // 从redis中查帖子的点赞数 存入帖子

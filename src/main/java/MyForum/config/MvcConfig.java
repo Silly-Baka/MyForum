@@ -1,4 +1,4 @@
-package MyForum.common;
+package MyForum.config;
 
 import MyForum.interceptor.LoginInterceptor;
 import MyForum.interceptor.RefreshTokenInterceptor;
@@ -44,7 +44,9 @@ public class MvcConfig extends WebMvcConfigurationSupport {
                         "/common/**",
                         "/activation/**",
                         "/post/**",
-                        "/static/**"
+                        "/static/**",
+                        "/user/header/**",
+                        "/user/profile/**"
                 );
 
         registry.addInterceptor(unreadCountInterceptor)

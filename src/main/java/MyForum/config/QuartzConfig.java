@@ -1,4 +1,4 @@
-package MyForum.common;
+package MyForum.config;
 
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;

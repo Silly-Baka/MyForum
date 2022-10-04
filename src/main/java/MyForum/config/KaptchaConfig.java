@@ -1,4 +1,4 @@
-package MyForum.common;
+package MyForum.config;
 
 import com.google.code.kaptcha.Producer;
 import com.google.code.kaptcha.impl.DefaultKaptcha;

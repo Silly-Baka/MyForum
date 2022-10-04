@@ -1,6 +1,8 @@
 package MyForum.util;
 
 
+import MyForum.DTO.UserDTO;
+import MyForum.pojo.User;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -8,6 +10,8 @@ import com.alibaba.fastjson.JSONObject;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+
+import static MyForum.util.MyForumConstant.*;
 
 /**
  * Date: 2022/8/9

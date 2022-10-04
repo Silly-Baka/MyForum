@@ -1,7 +1,7 @@
 package MyForum.controller;
 
 import MyForum.DTO.Page;
-import MyForum.common.Config;
+import MyForum.config.Config;
 import MyForum.pojo.Post;
 import MyForum.service.SearchService;
 import cn.hutool.core.util.StrUtil;
