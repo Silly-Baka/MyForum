@@ -49,6 +49,10 @@ spring:
         acknowledge-mode: manual
     publisher-confirm-type: correlated
 
+  elasticsearch:
+    uris: 192.168.75.100:9200
+
+
 
 mybatis:
   configuration:

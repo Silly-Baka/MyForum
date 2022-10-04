@@ -72,8 +72,20 @@
         limit #{offset},#{pageSize}
     </select>
 
+    <select id="selectUnreadMessageCountByUserId" resultType="long">
+        select count(*)
+        from message
+        where to_id = #{userId} and status = 0
+    </select>
+
     <insert id="addMessage" keyProperty="id" useGeneratedKeys="true">
         insert into message(from_id, to_id, content, status, create_time, message_type, entity_id)
         values (#{fromId},#{toId},#{content},#{status},#{createTime},#{messageType},#{entityId})
     </insert>
+
+    <update id="updateMessageStatusByIds" >
+        update message
+        set status = #{status}
+        where id = #{id}
+    </update>
 </mapper>

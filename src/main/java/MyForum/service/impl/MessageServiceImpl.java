@@ -14,6 +14,7 @@ import MyForum.pojo.User;
 import MyForum.service.MessageService;
 import cn.hutool.core.bean.BeanUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -81,6 +82,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional
     public Page<ConversationDTO> getLetterListByConversationId(Long conversationId, Integer currentPage) {
 
         Conversation conversation = conversationMapper.selectConversationById(conversationId);
@@ -89,6 +91,15 @@ public class MessageServiceImpl implements MessageService {
 
         List<Message> letterList = messageMapper.selectMessageListByTypeAndEntityId(MESSAGE_TYPE_LETTER, conversationId,
                 (currentPage - 1) * page.getPageSize(), page.getPageSize());
+
+        // 更新db 将这些消息设为已读
+        List<Long> ids = new ArrayList<>();
+        letterList.forEach((message -> {
+            ids.add(message.getId());
+        }));
+        ids.forEach((id->{
+            messageMapper.updateMessageStatusByIds(id,1);
+        }));
 
         ConversationDTO conversationDTO = BeanUtil.copyProperties(conversation, ConversationDTO.class);
         conversationDTO.setMessageList(letterList);
@@ -188,6 +199,9 @@ public class MessageServiceImpl implements MessageService {
         List<Message> messageList = messageMapper.selectMessageListByToIdAndType(toId, messageType, (currentPage - 1) * page.getPageSize(), page.getPageSize());
         List<MessageDTO> messageDTOList = new ArrayList<>();
 
+        // 记录消息的id 等待更改为已读
+        List<Long> ids = new ArrayList<>();
+
         for(Message message:messageList){
             MessageDTO messageDTO = BeanUtil.copyProperties(message, MessageDTO.class);
             // 获取消息发出者的消息
@@ -197,10 +211,21 @@ public class MessageServiceImpl implements MessageService {
             messageDTO.setFromUser(fromUserDTO);
 
             messageDTOList.add(messageDTO);
+
+            ids.add(message.getId());
         }
 
         page.setRecords(messageDTOList);
 
+        ids.forEach(id->{
+            messageMapper.updateMessageStatusByIds(id,1);
+        });
+
         return page;
+    }
+
+    @Override
+    public Long getUnreadCountByUserId(Long userId) {
+        return messageMapper.selectUnreadMessageCountByUserId(userId);
     }
 }

@@ -53,4 +53,6 @@ public interface MessageService {
      * @return 通知列表
      */
     Page<MessageDTO> getNoticeMessageList(Long toId, Integer messageType, Integer currentPage);
+
+    Long getUnreadCountByUserId(Long userId);
 }

@@ -132,9 +132,7 @@ public class PostServiceImpl implements PostService {
             post.setIsLiked(isLiked);
 
             if(likeCount != null){
-                post.setScore(likeCount.intValue());
-            }else {
-                post.setScore(0);
+                post.setScore(post.getScore()+likeCount.intValue());
             }
             return post;
         }

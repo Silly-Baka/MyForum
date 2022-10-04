@@ -39,7 +39,7 @@
 								<span class="float-right text-muted font-size-12" th:text="${map.commentMessage != null ? map.commentMessage.createTime : ''}">2019-04-28 14:13:25</span>
 							</h6>
 							<div>
-								<a th:href="@{|/message/notice/${map.commentMessage.messageType}/list/1|}">
+								<a th:if="${map.commentMessage != null}" th:href="@{|/message/notice/${map.commentMessage.messageType}/list/1|}">
 									用户<i th:text="${map.commentMessage != null ? map.commentUsername : 'null' }">nowcoder</i> 评论了你的<b>帖子</b> ...
 								</a>
 								<ul class="d-inline font-size-12 float-right">
@@ -57,7 +57,7 @@
 								<span class="float-right text-muted font-size-12" th:text="${map.likeMessage != null ? map.likeMessage.createTime : ''}">2019-04-28 14:13:25</span>
 							</h6>
 							<div>
-								<a th:href="@{|/message/notice/${map.likeMessage.messageType}/list/1|}">用户 <i th:text="${map.likeMessage != null ? map.likeUsername : 'null' }">nowcoder</i> 点赞了你的<b>帖子</b> ...</a>
+								<a th:if="${map.likeMessage != null}" th:href="@{|/message/notice/${map.likeMessage.messageType}/list/1|}">用户 <i th:text="${map.likeMessage != null ? map.likeUsername : 'null' }">nowcoder</i> 点赞了你的<b>帖子</b> ...</a>
 								<ul class="d-inline font-size-12 float-right">
 									<li class="d-inline ml-2"><span class="text-primary">共 <i th:text="${map.likeCount != null ? map.likeCount : 0}">3</i> 条会话</span></li>
 								</ul>
@@ -73,7 +73,7 @@
 								<span class="float-right text-muted font-size-12" th:text="${map.followMessage != null ? map.followMessage.createTime : ''}">2019-04-28 14:13:25</span>
 							</h6>
 							<div>
-								<a th:href="@{|/message/notice/${map.followMessage.messageType}/list/1|}">用户 <i th:text="${map.followMessage != null ? map.followUsername : 'null' }">nowcoder</i> 关注了你 ...</a>
+								<a th:if="${map.followMessage != null}" th:href="@{|/message/notice/${map.followMessage.messageType}/list/1|}">用户 <i th:text="${map.followMessage != null ? map.followUsername : 'null' }">nowcoder</i> 关注了你 ...</a>
 								<ul class="d-inline font-size-12 float-right">
 									<li class="d-inline ml-2"><span class="text-primary">共 <i th:text="${map.followCount != null ? map.followCount : 0}">3</i> 条会话</span></li>
 								</ul>

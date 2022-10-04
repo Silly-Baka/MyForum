@@ -17,6 +17,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +35,7 @@ import static MyForum.util.MyForumConstant.MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME;
 @RequestMapping("/message")
 public class MessageController {
 
-    @Autowired
+    @Resource
     private MessageService messageService;
 
 

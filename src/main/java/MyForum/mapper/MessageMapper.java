@@ -39,4 +39,8 @@ public interface MessageMapper {
 
     List<Message> selectMessageListByToIdAndType(@Param("toId") Long toId, @Param("messageType") Integer messageType,
                                                  @Param("offset") Integer offset, @Param("pageSize") Integer pageSize);
+
+    Long selectUnreadMessageCountByUserId(Long userId);
+
+    void updateMessageStatusByIds(Long id,Integer status);
 }

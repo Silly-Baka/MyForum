@@ -2,11 +2,14 @@ package MyForum.common;
 
 import MyForum.interceptor.LoginInterceptor;
 import MyForum.interceptor.RefreshTokenInterceptor;
+import MyForum.interceptor.UnreadCountInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+
+import javax.annotation.Resource;
 
 /**
  * Date: 2022/8/17
@@ -18,10 +21,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 @Configuration
 public class MvcConfig extends WebMvcConfigurationSupport {
 
-    @Autowired
+    @Resource
     private LoginInterceptor loginInterceptor;
-    @Autowired
+    @Resource
     private RefreshTokenInterceptor refreshTokenInterceptor;
+    @Resource
+    private UnreadCountInterceptor unreadCountInterceptor;
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
@@ -41,6 +46,9 @@ public class MvcConfig extends WebMvcConfigurationSupport {
                         "/post/**",
                         "/static/**"
                 );
+
+        registry.addInterceptor(unreadCountInterceptor)
+                .addPathPatterns("/**");
     }
 
     @Override

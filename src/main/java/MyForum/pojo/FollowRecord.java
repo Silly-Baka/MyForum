@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class FollowRecord {
+
+    private Long id;
     /**
      * 用户id
      */

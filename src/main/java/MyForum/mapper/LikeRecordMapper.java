@@ -13,6 +13,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface LikeRecordMapper {
     /**
+     * 根据用户id获得该用户被点赞的次数
+     * @param userId 用户id
+     * @return 该用户被点赞的次数
+     */
+    Integer selectLikeCountByUserId(Long userId);
+
+    /**
      * 添加点赞记录
      */
     void addLikeRecord(LikeRecord likeRecord);

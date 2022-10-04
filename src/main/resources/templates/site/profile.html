@@ -38,7 +38,7 @@
 					<img th:src="@{|${user.headerUrl}|}" class="align-self-start mr-4 rounded-circle" alt="用户头像" style="width:50px;">
 					<div class="media-body">
 						<h5 class="mt-0 text-warning">
-							<span>nowcoder</span>
+							<span th:text="${user.username}">nowcoder</span>
 							<input type="hidden" id="targetUserId" th:value="${user.id}">
 							<button type="button" th:class="|btn ${user.isFollowed == true ? 'btn-secondary' : 'btn-info'} btn-sm float-right mr-5 follow-btn|" th:text="|${user.isFollowed == true ? '已关注' : '关注TA'  }|">
 								关注TA

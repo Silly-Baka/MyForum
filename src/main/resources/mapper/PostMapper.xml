@@ -20,7 +20,7 @@
     <select id="getPostList" resultMap="PostMap">
         select <include refid="allColumn"/>
         from post_detail
-        where status = 1 or status = 2
+        where status = 0 or status = 1
         order by type desc
         limit #{offset},#{pageSize}
     </select>
@@ -28,9 +28,14 @@
         select count(*)
         from post_detail
         <where>
-            <if test="userId != null">
-                user_id = #{userId}
-            </if>
+            <trim suffixOverrides="and">
+                <if test="userId != null">
+                    user_id = #{userId} and
+                </if>
+                <if test="status == null">
+                    status = 0 or status = 1 and
+                </if>
+            </trim>
         </where>
     </select>
 
@@ -112,4 +117,10 @@
         insert into post_detail(<include refid="allColumn"/>)
         values(null,#{userId},#{title},#{content},#{type},#{status},#{createTime},#{commentCount},#{score})
     </insert>
+
+
+    <select id="getAllPost" resultMap="PostMap">
+        select <include refid="allColumn"/>
+        from post_detail
+    </select>
 </mapper>

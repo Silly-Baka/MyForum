@@ -3,8 +3,14 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="MyForum.mapper.FollowRecordMapper">
+    <select id="selectFollowCountByUserId" resultType="int">
+        SELECT count(*)
+        FROM follow_record
+        WHERE user_id = #{userId}
+    </select>
+
     <insert id="addFollowRecord">
         insert into follow_record
-        values (#{userId},#{followId})
+        values (null,#{userId},#{followId})
     </insert>
 </mapper>

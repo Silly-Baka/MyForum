@@ -2,12 +2,16 @@ package MyForum.service.impl;
 
 import MyForum.DTO.UserDTO;
 import MyForum.common.UserHolder;
+import MyForum.mapper.FollowByRecordMapper;
+import MyForum.mapper.FollowRecordMapper;
+import MyForum.mapper.LikeRecordMapper;
 import MyForum.mapper.UserMapper;
 import MyForum.pojo.User;
 import MyForum.service.UserService;
 import MyForum.util.MailClient;
 import MyForum.util.CommonUtil;
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -42,11 +47,18 @@ import static MyForum.redis.RedisConstant.*;
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
-    @Autowired
+    @Resource
     private UserMapper userMapper;
-    @Autowired
+    @Resource
+    private LikeRecordMapper likeRecordMapper;
+    @Resource
+    private FollowRecordMapper followRecordMapper;
+    @Resource
+    private FollowByRecordMapper followByRecordMapper;
+
+    @Resource
     private TemplateEngine engine;
-    @Autowired
+    @Resource
     private MailClient mailClient;
 
     @Value("${MyForum.path.domain}")
@@ -364,33 +376,46 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.selectUserById(userId);
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
 
-        // 获取用户被赞的次数
+        // 获取用户被赞的次数 = Redis中未刷入db的点赞 + db中已有的点赞
         Integer likedCount = (Integer) redisTemplate.opsForValue().get(LIKE_USER_TOTAL_KEY + userId);
+        if(likedCount == null){
+            likedCount = 0;
+        }
+        likedCount += likeRecordMapper.selectLikeCountByUserId(userId);
         userDTO.setLikedCount(likedCount);
 
         // 获取用户的关注数 和 被关注数
         String followCountKey = FOLLOW_LIST_KEY + userId;
+
+        // redis中的关注数 + db中的关注数
         Long followCount = redisTemplate.opsForSet().size(followCountKey);
-        if(followCount != null){
-            userDTO.setFollowCount(followCount.intValue());
-        }else {
-            userDTO.setFollowCount(666);
+        if(followCount == null){
+            followCount = 0L;
         }
+        followCount += followRecordMapper.selectFollowCountByUserId(userId);
+        userDTO.setFollowCount(followCount.intValue());
 
         String followedCountKey = FOLLOWED_BY_LIST_KEY + userId;
+
+        // redis中的被关注数 + db中的被关注数
         Long followedCount = redisTemplate.opsForSet().size(followedCountKey);
-        if(followedCount != null){
-            userDTO.setFollowedCount(followedCount.intValue());
-        }else {
-            userDTO.setFollowedCount(666);
+        if(followedCount == null){
+            followedCount = 0L;
         }
+        followedCount += followByRecordMapper.selectFollowedCountByUserId(userId);
+        userDTO.setFollowedCount(followedCount.intValue());
 
         // 查看当前用户是否已关注该用户
         // 查询该用户的被关注列表 有无当前用户
         Long currentUserId = UserHolder.getCurrentUser().getId();
-        Boolean isFollowed = redisTemplate.opsForSet().isMember(followedCountKey, currentUserId);
 
-        userDTO.setIsFollowed(isFollowed);
+        Boolean redisIsFollow = redisTemplate.opsForSet().isMember(followedCountKey, currentUserId);
+
+        // 等于1就是有这条记录
+        Integer dbIsFollow = followByRecordMapper.selectOneByUserIdAndFollowedId(userId, currentUserId);
+
+        // redis或者db中有关注都行
+        userDTO.setIsFollowed(BooleanUtil.isTrue(redisIsFollow) || dbIsFollow == 1);
 
         return userDTO;
     }

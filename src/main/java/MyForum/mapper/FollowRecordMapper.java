@@ -13,5 +13,13 @@ import org.apache.ibatis.annotations.Mapper;
  **/
 @Mapper
 public interface FollowRecordMapper {
+
+    /**
+     * 根据用户的id查询该用户关注的人数
+     * @param userId 用户id
+     * @return 该用户关注的人数
+     */
+    Integer selectFollowCountByUserId(Long userId);
+
     void addFollowRecord(FollowRecord followRecord);
 }

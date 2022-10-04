@@ -76,6 +76,9 @@ public interface PostMapper {
      */
     List<Long> getAllPostId();
 
+    // 获得所有帖子 -- 用于同步数据 仅测试环境下用
+    List<Post> getAllPost();
+
     /**
      * 添加帖子
      * @param post 帖子

@@ -3,9 +3,22 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="MyForum.mapper.FollowByRecordMapper">
+    <select id="selectFollowedCountByUserId" resultType="int">
+        select count(*)
+        from follow_by_record
+        where user_id = #{userId}
+    </select>
+
+    <select id="selectOneByUserIdAndFollowedId" resultType="int">
+        select count(*)
+        from follow_by_record
+        where user_id = #{userId} and followed_id = #{followedId}
+        limit 1
+    </select>
+
     <insert id="addFollowByRecord">
         insert into follow_by_record
-        values (#{userId},#{followById})
+        values (null,#{userId},#{followById})
     </insert>
 
 </mapper>

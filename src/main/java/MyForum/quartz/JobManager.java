@@ -4,6 +4,7 @@ import MyForum.mapper.*;
 import MyForum.pojo.FollowByRecord;
 import MyForum.pojo.FollowRecord;
 import MyForum.pojo.LikeRecord;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
@@ -17,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -119,6 +118,7 @@ public class JobManager {
      * 定期刷新关注数据的定时任务
      */
     private class FollowJob extends QuartzJobBean{
+        @SneakyThrows
         @Override
         @Transactional
         protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
@@ -148,6 +148,7 @@ public class JobManager {
             List<FollowByRecord> followByRecordList = new ArrayList<>();
 
 //            getFollowRecordFromRedis(userIds,followByRecordList,deleteKeySet);
+            getFollowRecordFromRedis(FollowByRecord.class,followByRecordList,userIds,deleteKeySet,FOLLOWED_BY_LIST_KEY);
 
             // 同步进数据库
             FollowByRecordMapper followByRecordMapper = sqlSession.getMapper(FollowByRecordMapper.class);
@@ -164,24 +165,31 @@ public class JobManager {
             log.info("定期刷新关注任务 已完成 -- 任务结束....");
         }
 
-        private <T> void getFollowRecordFromRedis(Class<T> clazz, List<T> records, List<Long> ids, Set<String> deleteKeySet, String keyPrefix) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-            for(long id : ids){
-                String key = FOLLOW_LIST_KEY + id;
+        private <T> void getFollowRecordFromRedis(Class<T> clazz, List<T> records, List<Long> userIds, Set<String> deleteKeySet, String keyPrefix){
+            for(long userId : userIds){
+                String key = keyPrefix + userId;
                 Set<Object> entityIds = redisTemplate.opsForSet().members(key);
 
                 if(entityIds == null){
                     continue;
                 }
                 deleteKeySet.add(key);
-
-                Constructor<T> constructor = clazz.getConstructor(null);
                 for(Object entityId : entityIds){
-                    FollowRecord followRecord = new FollowRecord();
-                    T instance = constructor.newInstance();
-            //todo 还没写完
-//                    if(clazz.isAssignableFrom())
+                    // 关注记录
+                    if(clazz == FollowRecord.class){
+                        FollowRecord followRecord = new FollowRecord();
+                        followRecord.setUserId(userId);
+                        followRecord.setFollowId(Long.valueOf(String.valueOf(entityId)));
 
-                    records.add(instance);
+                        records.add((T)followRecord);
+                    // 被关注记录
+                    }else if(clazz == FollowByRecord.class){
+                        FollowByRecord followByRecord = new FollowByRecord();
+                        followByRecord.setUserId(userId);
+                        followByRecord.setFollowById(Long.valueOf(String.valueOf(entityId)));
+
+                        records.add((T)followByRecord);
+                    }
                 }
             }
         }
@@ -205,8 +213,6 @@ public class JobManager {
                 .withSchedule(SimpleScheduleBuilder
                         .simpleSchedule()
                         .withIntervalInHours(1)
-//                        // 先设置一分钟更新一次测试
-//                        .withIntervalInMinutes(1)
                         .repeatForever())
                 .build();
     }
