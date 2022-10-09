@@ -43,7 +43,7 @@ public class User implements Serializable {
     private String email;
     /**
      * 用户类型
-     * 0-普通用户; 1-管理员; 2-版主
+     * 0-普通用户; 1-管理员 管理帖子 加精、置顶、删除; 2-版主 只能加精和置顶
      */
     private Integer type;
     /**

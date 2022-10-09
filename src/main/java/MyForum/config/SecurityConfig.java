@@ -1,6 +1,7 @@
 package MyForum.config;
 
 import MyForum.util.CommonUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,6 +29,7 @@ import static MyForum.util.MyForumConstant.*;
  * Description：Spring Security 配置类
  **/
 @Configuration
+@Slf4j
 public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -57,6 +59,17 @@ public class SecurityConfig {
                         AUTHORITY_ADMIN,
                         AUTHORITY_MODERATOR
                 )
+                .antMatchers("/post/top/**",
+                        "/post/wonderful/**")
+                .hasAnyAuthority(
+                        AUTHORITY_ADMIN,
+                        AUTHORITY_MODERATOR
+                )
+                .antMatchers("/post/delete/**",
+                        "/data/**")
+                .hasAnyAuthority(
+                        AUTHORITY_ADMIN
+                )
                 .anyRequest().permitAll()
                 .and().csrf().disable();
 
@@ -66,6 +79,9 @@ public class SecurityConfig {
                 .authenticationEntryPoint(new AuthenticationEntryPoint() {
                     @Override
                     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+
+                        log.info("尚未登录，请求:{} 已被拦截",request.getRequestURI());
+
                         String xRequestedWith = request.getHeader("x-requested-with");
                         // 异步请求 --> 返回错误的json串
                         if("XMLHttpRequest".equals(xRequestedWith)){
@@ -82,12 +98,14 @@ public class SecurityConfig {
                 .accessDeniedHandler(new AccessDeniedHandler() {
                     @Override
                     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+                        log.info("当前用户权限不足，请求:{} 已被拦截",request.getRequestURI());
+
                         String xRequestedWith = request.getHeader("x-requested-with");
                         // 异步请求 --> 返回错误的json串
                         if("XMLHttpRequest".equals(xRequestedWith)){
                             response.setContentType("application/plain;charset=utf-8");
                             PrintWriter writer = response.getWriter();
-                            writer.write(CommonUtil.getJsonString(403,"您尚未登录"));
+                            writer.write(CommonUtil.getJsonString(403,"权限不足，访问失败"));
                         }else {
                             // 同步请求 --> 重定位到权限不足的页面
                             response.sendRedirect(request.getContextPath() + "/common/denied");

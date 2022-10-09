@@ -49,7 +49,7 @@ public class UserDTO{
     private Boolean isFollowed;
 
     /**
-     * 用户类型
+     * 用户类型 - 用于前端权限管理
      */
     private Integer type;
 }

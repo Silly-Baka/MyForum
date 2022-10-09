@@ -1,5 +1,6 @@
 package MyForum.util;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,6 +18,13 @@ import static MyForum.redis.RedisConstant.LIKE_POST_KEY;
  * Description：用于存放各种常量
  **/
 public class MyForumConstant {
+
+    /**
+     * 网站开启时间 用于计算热度值
+     * 随便搞 2018年1月1日
+     */
+    public static final LocalDate START_DATE = LocalDate.of(2018,1,1);
+
     /**
      * 成功激活
      */
@@ -88,12 +96,28 @@ public class MyForumConstant {
      * 关注事件
      */
     public static final int EVENT_TYPE_FOLLOW = 777;
+    /**
+     * 帖子添加事件
+     */
+    public static final int EVENT_TYPE_POST_ADD = 888;
+    /**
+     * 帖子更新事件
+     */
+    public static final int EVENT_TYPE_POST_UPDATE = 999;
+    /**
+     * 帖子删除事件
+     */
+    public static final int EVENT_TYPE_POST_DELETE = 1001;
+
 
     public static final Map<Integer,Integer> EVENT_TYPE_TO_MESSAGE_TYPE_MAP = new HashMap<>();
 
     public static final Set<Integer> NOTICE_TYPE_SET = new HashSet<>();
 
     public static final Map<Integer,String> MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME = new HashMap<>();
+
+    // 事件类型 ：消息队列名 的映射表
+    public static final Map<Integer,String> EVENT_TYPE_TO_QUEUE_NAME_MAP = new HashMap<>();
 
     static {
         // 初始化 Redis中实体类型和点赞key的映射
@@ -115,6 +139,14 @@ public class MyForumConstant {
         MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_FOLLOW,"follow");
         MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_LIKE,"like");
         MESSAGE_TYPE_TO_MESSAGE_TYPE_NAME.put(MESSAGE_TYPE_COMMENT,"comment");
+
+        // 初始化 事件类型 ：消息队列名的映射表
+        EVENT_TYPE_TO_QUEUE_NAME_MAP.put(EVENT_TYPE_COMMENT,"notice");
+        EVENT_TYPE_TO_QUEUE_NAME_MAP.put(EVENT_TYPE_LIKE,"notice");
+        EVENT_TYPE_TO_QUEUE_NAME_MAP.put(EVENT_TYPE_FOLLOW,"notice");
+        EVENT_TYPE_TO_QUEUE_NAME_MAP.put(EVENT_TYPE_POST_ADD,"elastic_post_add");
+        EVENT_TYPE_TO_QUEUE_NAME_MAP.put(EVENT_TYPE_POST_UPDATE,"elastic_post_update");
+        EVENT_TYPE_TO_QUEUE_NAME_MAP.put(EVENT_TYPE_POST_DELETE,"elastic_post_delete");
     }
 
     // 权限管理

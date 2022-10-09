@@ -1,5 +1,6 @@
 package MyForum.config;
 
+import MyForum.interceptor.AccessRecordInterceptor;
 import MyForum.interceptor.LoginInterceptor;
 import MyForum.interceptor.RefreshTokenInterceptor;
 import MyForum.interceptor.UnreadCountInterceptor;
@@ -27,6 +28,8 @@ public class MvcConfig extends WebMvcConfigurationSupport {
     private RefreshTokenInterceptor refreshTokenInterceptor;
     @Resource
     private UnreadCountInterceptor unreadCountInterceptor;
+    @Resource
+    private AccessRecordInterceptor accessRecordInterceptor;
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
@@ -50,6 +53,9 @@ public class MvcConfig extends WebMvcConfigurationSupport {
                 );
 
         registry.addInterceptor(unreadCountInterceptor)
+                .addPathPatterns("/**");
+
+        registry.addInterceptor(accessRecordInterceptor)
                 .addPathPatterns("/**");
     }
 

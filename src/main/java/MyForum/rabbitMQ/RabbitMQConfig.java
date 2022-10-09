@@ -48,18 +48,16 @@ public class RabbitMQConfig {
             @Override
             public void confirm(CorrelationData correlationData, boolean ack, String cause) {
                 // 没有成功投递给交换机 重新投递
-                ReturnedMessage returnedMessage = correlationData.getReturned();
-                String exchange = returnedMessage.getExchange();
                 if(!ack){
+                    ReturnedMessage returnedMessage = correlationData.getReturned();
+                    String exchange = returnedMessage.getExchange();
+
                     log.info("消息发送失败，目标交换机为：{} ",exchange);
                     log.info("消息将会被重新投递...");
                     Message message = returnedMessage.getMessage();
                     String routingKey = returnedMessage.getRoutingKey();
 
                     rabbitTemplate.convertAndSend(exchange,routingKey,message,correlationData);
-
-                }else {
-                    log.info("消息发送成功，目标交换机为：{} ",exchange);
                 }
             }
         });
@@ -70,12 +68,17 @@ public class RabbitMQConfig {
                 String exchange = returned.getExchange();
                 String routingKey = returned.getRoutingKey();
 
+                //todo 这里要判断是否是延迟队列中的消息 因为延迟队列中的消息进入死信队列也会调用该方法
+                if("timing_dead_queue".equals(routingKey)){
+                    return;
+                }
+
                 log.info("消息投递给队列失败，交换机为：{}，路由key为:{}",exchange,routingKey);
 
                 CorrelationData correlationData = new CorrelationData();
                 // 发送给业务用消息队列
                 correlationData.setReturned(returned);
-                rabbitTemplate.convertAndSend(exchange,routingKey,returned.getMessage());
+                rabbitTemplate.convertAndSend(exchange,routingKey,returned.getMessage(), correlationData);
             }
         });
 
@@ -113,7 +116,7 @@ public class RabbitMQConfig {
                                  @Qualifier("notice_queue") Queue noticeQueue){
         return BindingBuilder.bind(noticeQueue)
                 .to(myforumExchange)
-                .with("#.notice.#")
+                .with("notice.#")
                 .noargs();
     }
 
@@ -183,6 +186,43 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(resendQueue)
                 .to(myforumExchange)
                 .with("resend.#")
+                .noargs();
+    }
+
+    @Bean("elastic_post_add_queue")
+    public Queue elasticAddQueue(){
+        return QueueBuilder.durable("elastic_post_add_queue").build();
+    }
+    @Bean
+    public Binding bindingElasticAdd(@Qualifier("myforum_exchange") Exchange myforumExchange,
+                                     @Qualifier("elastic_post_add_queue") Queue elasticPostAddQueue){
+        return BindingBuilder.bind(elasticPostAddQueue)
+                .to(myforumExchange)
+                .with("elastic_post_add.#")
+                .noargs();
+    }
+    @Bean("elastic_post_update_queue")
+    public Queue elasticUpdateQueue(){
+        return QueueBuilder.durable("elastic_post_update_queue").build();
+    }
+    @Bean
+    public Binding bindingElasticUpdate(@Qualifier("myforum_exchange") Exchange myforumExchange,
+                                     @Qualifier("elastic_post_update_queue") Queue elasticPostUpdateQueue){
+        return BindingBuilder.bind(elasticPostUpdateQueue)
+                .to(myforumExchange)
+                .with("elastic_post_update.#")
+                .noargs();
+    }
+    @Bean("elastic_post_delete_queue")
+    public Queue elasticDeleteQueue(){
+        return QueueBuilder.durable("elastic_post_delete_queue").build();
+    }
+    @Bean
+    public Binding bindingElasticDelete(@Qualifier("myforum_exchange") Exchange myforumExchange,
+                                        @Qualifier("elastic_post_delete_queue") Queue elasticPostDeleteQueue){
+        return BindingBuilder.bind(elasticPostDeleteQueue)
+                .to(myforumExchange)
+                .with("elastic_post_delete.#")
                 .noargs();
     }
 }

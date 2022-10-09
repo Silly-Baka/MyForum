@@ -21,6 +21,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -161,6 +166,11 @@ public class CommonController {
 
     @GetMapping("/denied")
     public String denied(){
-        return "/error/404";
+        return "site/error/404";
+    }
+
+    @GetMapping("/data")
+    public String data(){
+        return "site/admin/data";
     }
 }

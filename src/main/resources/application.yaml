@@ -9,6 +9,7 @@ spring:
     password: hjh123123
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+
   main:
     allow-circular-references: true
 
@@ -51,6 +52,10 @@ spring:
 
   elasticsearch:
     uris: 192.168.75.100:9200
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
 
 
 

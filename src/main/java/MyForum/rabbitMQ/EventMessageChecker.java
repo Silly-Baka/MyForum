@@ -52,19 +52,21 @@ public class EventMessageChecker {
             if("check_queue".equals(queueName)){
 
                 redisTemplate.opsForHash().put(redisKey,String.valueOf(eventMessage.getEventId()),eventMessage);
+                log.info("该消息成功接收，已入库记录");
 
+            // 如果来自延迟队列
             }else if("timing_dead_queue".equals(queueName)){
             // 如果来自延迟队列 则先检查库中有无该消息
                 Boolean hasMessage = redisTemplate.opsForHash().hasKey(redisKey,String.valueOf(eventMessage.getEventId()));
                 // 若库中有该消息 则丢弃消息（无操作）
                 if(BooleanUtil.isTrue(hasMessage)){
-
+                    log.info("该消息已成功接收并入库，丢弃本消息");
                 }else {
-                // 若无，则发送消息给重发队列 --- 让生产者接收，并重新发送
+                // 若无，则发送消息给生产者的重发队列 --- 让生产者接收，并重新发送
                     CorrelationData correlationData = new CorrelationData(String.valueOf(eventMessage.getEventId()));
-                    correlationData.setReturned(new ReturnedMessage(null,666,"","myforum_exchange","resend" ));
 
-                    rabbitTemplate.convertAndSend("myforum_exchange","resend", eventMessage,correlationData);
+                    rabbitTemplate.convertAndSend("myforum_exchange","resend", eventMessage, correlationData);
+                    log.info("消息已丢失，已发送重发消息给生产者");
                 }
             }
             // 确认消息已消费

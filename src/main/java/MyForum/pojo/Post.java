@@ -54,10 +54,10 @@ public class Post implements Serializable {
     /**
      * 帖子创建时间
      */
-    @Field(type = FieldType.Date,format = DateFormat.date_hour_minute_second)
+    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
     private LocalDateTime createTime;
     /**
-     * 帖子的点赞数
+     * 帖子的热度
      */
     @Field(type = FieldType.Integer)
     private Integer score;

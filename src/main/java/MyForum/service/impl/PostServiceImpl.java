@@ -6,23 +6,27 @@ import MyForum.common.UserHolder;
 import MyForum.mapper.PostMapper;
 import MyForum.DTO.Page;
 import MyForum.mapper.UserMapper;
+import MyForum.pojo.EventMessage;
 import MyForum.pojo.Post;
 import MyForum.pojo.User;
+import MyForum.rabbitMQ.EventMessageProducer;
 import MyForum.service.PostService;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.BooleanUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static MyForum.redis.RedisConstant.*;
+import static MyForum.util.MyForumConstant.*;
 
 /**
  * Date: 2022/8/8
@@ -33,12 +37,14 @@ import static MyForum.redis.RedisConstant.*;
  **/
 @Service
 public class PostServiceImpl implements PostService {
-    @Autowired
+    @Resource
     private PostMapper postMapper;
-    @Autowired
+    @Resource
     private UserMapper userMapper;
-    @Autowired
+    @Resource
     private RedisTemplate<String,Object> redisTemplate;
+    @Resource
+    private EventMessageProducer eventMessageProducer;
 
     @Override
     public Page<Post> getPostList(Integer currentPage) {
@@ -112,6 +118,12 @@ public class PostServiceImpl implements PostService {
         post.setCreateTime(LocalDateTime.now());
 
         postMapper.addPost(post);
+
+        // 创建事件并发送给消息队列 -- 将新的数据同步到es
+        EventMessage eventMessage = eventMessageProducer.createEventMessage(EVENT_TYPE_POST_ADD, null, post.getId(),
+                Collections.singletonMap("post", post));
+        eventMessageProducer.sendMessage(eventMessage);
+
     }
 
     @Override
@@ -158,6 +170,7 @@ public class PostServiceImpl implements PostService {
         }
         // 查完后缓存到redis中
         redisTemplate.opsForValue().set(key,post,CACHE_POST_EXPIRED_TIME, TimeUnit.SECONDS);
+
 
         return post;
     }
@@ -236,6 +249,57 @@ public class PostServiceImpl implements PostService {
         Integer likeCount = postMapper.getScoreByPostId(postId);
         map.put("likeCount",likeCount);
 
+        //todo 记录被点赞的帖子id
+        redisTemplate.opsForSet().add(OPERATED_POST_KEY,postId);
+
         return map;
+    }
+
+    @Override
+    public void setPostWonderful(Long postId, Integer status) {
+        Post post = new Post();
+        post.setId(postId);
+
+        // 未加精 则加精
+        if(status == 0){
+            post.setStatus(1);
+
+        }else if(status == 1){
+        // 已加精 则取消加精
+            post.setStatus(0);
+        }
+
+        postMapper.updatePostDynamic(post);
+
+        // 删redis缓存
+        redisTemplate.delete(CACHE_POST_KEY + postId);
+
+        //todo 记录被加精的帖子id
+        redisTemplate.opsForSet().add(OPERATED_POST_KEY,postId);
+    }
+
+    @Override
+    public void setPostTop(Long postId, Integer type) {
+        Post post = new Post();
+        post.setId(postId);
+
+        // 未置顶 则置顶
+        if(type == 0){
+            post.setType(1);
+        }else{
+        // 已置顶 则取消置顶
+            post.setType(0);
+        }
+
+        postMapper.updatePostDynamic(post);
+        // 删redis缓存
+        redisTemplate.delete(CACHE_POST_KEY + postId);
+    }
+
+    @Override
+    public void deletePost(Long postId) {
+        postMapper.deletePost(postId);
+        // 删redis缓存
+        redisTemplate.delete(CACHE_POST_KEY + postId);
     }
 }

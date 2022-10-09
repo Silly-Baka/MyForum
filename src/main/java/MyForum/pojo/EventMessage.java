@@ -29,9 +29,9 @@ public class EventMessage {
      */
     private Long originId;
     /**
-     * 事件目标id
+     * 事件目标实体id
      */
-    private Long targetId;
+    private Long entityId;
 
     /**
      * 用于拓展的参数表
@@ -67,12 +67,12 @@ public class EventMessage {
         this.originId = originId;
     }
 
-    public Long getTargetId() {
-        return targetId;
+    public Long getEntityId() {
+        return entityId;
     }
 
-    public void setTargetId(Long targetId) {
-        this.targetId = targetId;
+    public void setEntityId(Long entityId) {
+        this.entityId = entityId;
     }
 
     public void setProperties(Map<String, Object> properties) {

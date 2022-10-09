@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="MyForum.mapper.PostMapper">
     <sql id="allColumn">
-        id,user_id,title,content,type,status,create_time,comment_count
+        id,user_id,title,content,type,status,create_time,comment_count,score
     </sql>
     <resultMap id="PostMap" type="MyForum.pojo.Post">
         <id property="id" column="id"/>
@@ -70,6 +70,11 @@
         from post_detail
     </select>
 
+    <select id="getAllPost" resultMap="PostMap">
+        select <include refid="allColumn"/>
+        from post_detail
+    </select>
+
     <update id="updatePostDynamic">
         update post_detail
         <trim prefix="set" suffixOverrides=",">
@@ -113,14 +118,14 @@
         where id = #{postId}
     </update>
 
-    <insert id="addPost">
+    <insert id="addPost" useGeneratedKeys="true" keyProperty="id">
         insert into post_detail(<include refid="allColumn"/>)
         values(null,#{userId},#{title},#{content},#{type},#{status},#{createTime},#{commentCount},#{score})
     </insert>
 
+    <delete id="deletePost">
+        delete from post_detail
+        where id = #{postId}
+    </delete>
 
-    <select id="getAllPost" resultMap="PostMap">
-        select <include refid="allColumn"/>
-        from post_detail
-    </select>
 </mapper>

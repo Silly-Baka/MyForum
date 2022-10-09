@@ -18,7 +18,8 @@ function publish() {
 	}).then(function (res){
 		var data = res.data;
 		// 在提示框中显示信息
-		$("#hintBody").text = data.msg;
+		$("#hintBody").text(data.msg);
+		console.log(data.msg);
 		// 显示提示框
 		$("#hintModal").modal("show");
 		// 倒计时三秒后自动隐藏提示框

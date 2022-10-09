@@ -84,4 +84,6 @@ public interface PostMapper {
      * @param post 帖子
      */
     void addPost(Post post);
+
+    void deletePost(Long postId);
 }

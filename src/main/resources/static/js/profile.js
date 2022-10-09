@@ -10,7 +10,7 @@ function follow() {
 	console.log(targetUserId);
 
 	axios({
-		url: "http://localhost:8080//common/follow/" + targetUserId,
+		url: "http://localhost:8080/common/follow/" + targetUserId,
 		method: "GET"
 	}).then(function (res){
 		var data = res.data;

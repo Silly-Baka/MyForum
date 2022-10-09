@@ -15,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +31,9 @@ import java.util.Map;
 @Controller
 @Slf4j
 public class PostController {
-    @Autowired
+    @Resource
     private PostService postService;
-    @Autowired
+    @Resource
     private CommentService commentService;
 
 
@@ -125,6 +126,7 @@ public class PostController {
     @ResponseBody
     public String likePost(@PathVariable("postId") Long postId){
 
+
         if(UserHolder.getCurrentUser() == null){
             return CommonUtil.getJsonString(0,"点赞失败！用户尚未登录！");
         }
@@ -137,4 +139,46 @@ public class PostController {
         return CommonUtil.getJsonString(200,"点赞操作成功",map);
     }
 
+    /**
+     * 加精目标帖子
+     * @param postId 目标帖子id
+     * @param status 当前帖子状态
+     */
+    @GetMapping("/post/wonderful/{postId}/{status}")
+    public String setWonderful(@PathVariable("postId") Long postId, @PathVariable("status") Integer status){
+        if(postId == null || status == null){
+            throw new RuntimeException("非法参数！无法访问");
+        }
+
+        postService.setPostWonderful(postId,status);
+
+        return "redirect:/post/"+postId;
+    }
+
+    /**
+     * 置顶目标帖子
+     * @param postId 目标帖子id
+     * @param type 目标帖子当前类型
+     */
+    @GetMapping("/post/top/{postId}/{type}")
+    public String setTop(@PathVariable("postId") Long postId, @PathVariable("type") Integer type){
+        if(postId == null || type == null){
+            throw new RuntimeException("非法参数！无法访问");
+        }
+
+        postService.setPostTop(postId,type);
+
+        return "redirect:/post/"+postId;
+    }
+
+    @GetMapping("/post/delete/{postId}")
+    public String deletePost(@PathVariable("postId") Long postId){
+        if(postId == null){
+            throw new RuntimeException("非法参数！无法访问");
+        }
+
+        postService.deletePost(postId);
+
+        return "redirect:/index";
+    }
 }

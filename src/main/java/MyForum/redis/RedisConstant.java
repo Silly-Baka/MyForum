@@ -1,6 +1,8 @@
 package MyForum.redis;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Date: 2022/9/3
@@ -77,7 +79,24 @@ public class RedisConstant {
      */
     public static final String FOLLOW_LIST_KEY = "follow:user:";
 
+    /**
+     * 统计每一天的日活跃用户的key  count:daily:activeUser: + 日期 yyyy:MM:ss
+     */
+    public static final String COUNT_DAILY_ACTIVE_USER = "count:daily:activeUser:";
 
+    public static final String COUNT_UV_DAILY = "count:uv:daily:";
+
+    public static final String COUNT_UV_SECTION = "count:uv:section:";
+
+    /**
+     * 记录在一定时间内被操作过的帖子id的key，是Set类型的
+     */
+    public static final String OPERATED_POST_KEY = "operated:post";
+
+    /**
+     * 记录前100条热点帖子，数据结构为Zset value存帖子id score存帖子热度
+     */
+    public static final String HOTTEST_POST_KEY = "hottest:post";
 
     //-------- 以下为存放RabbitMQ消息的key -------------
 
@@ -87,5 +106,18 @@ public class RedisConstant {
     public static final String EVENT_MESSAGE_CHECK_KEY = "event:message:check";
     // 业务消息唯一id
     public static final String EVENT_MESSAGE_ONLY_ID_KEY = "event:message:onlyId";
+
+
+    // 日期格式化串
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy:MM:dd");
+
+    public static String getCountUVDaily(LocalDate date){
+        return COUNT_UV_DAILY + date.format(FORMATTER);
+    }
+
+    public static String getCountUVSection(LocalDate startDate, LocalDate endDate){
+        return COUNT_UV_SECTION + startDate.format(FORMATTER) + "_" + endDate.format(FORMATTER);
+    }
+
 
 }

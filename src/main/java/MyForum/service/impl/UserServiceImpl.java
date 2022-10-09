@@ -31,7 +31,9 @@ import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -126,6 +128,13 @@ public class UserServiceImpl implements UserService {
         UserHolder.addUser(user);
 
         map.put("successMsg","登陆成功！");
+
+        //todo 在redis中记录该用户的登陆记录
+        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy:MM:dd"));
+        // 以用户的id为偏移值，将bit位设置为1
+        redisTemplate.opsForValue().setBit(COUNT_DAILY_ACTIVE_USER+date,
+                user.getId(),true);
+
         return map;
     }
 

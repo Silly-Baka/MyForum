@@ -188,6 +188,9 @@ public class CommentServiceImpl implements CommentService {
         Integer lastPageNum = page.getTotal();
         // 再删除最后一页的缓存
         redisTemplate.delete(CACHE_COMMENT_PAGE_KEY + postId + ":" + lastPageNum);
+
+        //todo 记录被评论的帖子id
+        redisTemplate.opsForSet().add(OPERATED_POST_KEY,postId);
     }
 
 }

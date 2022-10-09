@@ -26,7 +26,7 @@ public class EventMessageBuilder {
         return this;
     }
     public EventMessageBuilder targetId(Long targetId){
-        eventMessage.setTargetId(targetId);
+        eventMessage.setEntityId(targetId);
         return this;
     }
     public EventMessageBuilder properties(Map<String,Object> properties){

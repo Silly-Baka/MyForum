@@ -23,6 +23,7 @@ import java.util.Map;
 
 import static MyForum.redis.RedisConstant.EVENT_MESSAGE_ONLY_ID_KEY;
 import static MyForum.redis.RedisConstant.EVENT_MESSAGE_ORIGIN_KEY;
+import static MyForum.util.MyForumConstant.EVENT_TYPE_TO_QUEUE_NAME_MAP;
 
 /**
  * Date: 2022/9/16
@@ -54,13 +55,16 @@ public class EventMessageProducer {
         // hashKey是业务消息的唯一id
         redisTemplate.opsForHash().put(key, String.valueOf(eventMessage.getEventId()),eventMessage);
 
-        CorrelationData correlationData = new CorrelationData(String.valueOf(eventMessage.getEventId()));
+        CorrelationData serviceData = new CorrelationData(String.valueOf(eventMessage.getEventId()));
+        CorrelationData delayData = new CorrelationData(String.valueOf(eventMessage.getEventId()));
+
+        // 根据事件的类型获取队列名字
+        String queueName = EVENT_TYPE_TO_QUEUE_NAME_MAP.get(eventMessage.getEventType());
+
         // 发送给业务用消息队列
-        correlationData.setReturned(new ReturnedMessage(null,666,"","myforum_exchange","notice"));
-        rabbitTemplate.convertAndSend("myforum_exchange","notice",eventMessage,correlationData);
+        rabbitTemplate.convertAndSend("myforum_exchange",queueName, eventMessage, serviceData);
 
         // 发送给延时队列 --- 消息补偿策略 用于保障消息可靠性
-        correlationData.setReturned(new ReturnedMessage(null,666,"","myforum_exchange","timing"));
         rabbitTemplate.convertAndSend("myforum_exchange", "timing", eventMessage,
                 new MessagePostProcessor() {
                     @Override
@@ -69,30 +73,28 @@ public class EventMessageProducer {
                         message.getMessageProperties().setExpiration("300000");
                         return message;
                     }
-                },correlationData);
+                },delayData);
     }
 
     /**
      * 创建一个事件消息
      * @param eventType 事件类型
      * @param originId 事件触发者id
-     * @param targetId 事件目标id
+     * @param entityId 事件目标id
      * @param prop 其他参数
      * @return 事件对象
      */
-    public EventMessage createEventMessage(Integer eventType, Long originId, Long targetId, Map<String,Object> prop){
+    public EventMessage createEventMessage(Integer eventType, Long originId, Long entityId, Map<String,Object> prop){
         // 用Redis获得唯一id
         Long onlyId = redisTemplate.opsForValue().increment(EVENT_MESSAGE_ONLY_ID_KEY);
 
-        EventMessage eventMessage = new EventMessageBuilder()
+        return new EventMessageBuilder()
                 .eventId(onlyId)
                 .eventType(eventType)
                 .originId(originId)
-                .targetId(targetId)
+                .targetId(entityId)
                 .properties(prop)
                 .build();
-
-        return eventMessage;
     }
 
     // 监听重发队列，若有消息 则需要将其重新发送给消费者
@@ -103,9 +105,11 @@ public class EventMessageProducer {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         try {
             sendMessage(eventMessage);
+
             channel.basicAck(deliveryTag,true);
             log.info("重发消息成功，消息为：{}",eventMessage);
         } catch (IOException e) {
+
             log.error("重发消息服务异常,消息为：{}",eventMessage);
             channel.basicNack(deliveryTag,true,true);
         }

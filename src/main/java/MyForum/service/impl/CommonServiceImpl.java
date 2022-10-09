@@ -5,16 +5,22 @@ import MyForum.pojo.EventMessage;
 import MyForum.rabbitMQ.EventMessageProducer;
 import MyForum.service.CommonService;
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 import static MyForum.redis.RedisConstant.*;
 import static MyForum.util.MyForumConstant.*;
@@ -27,6 +33,7 @@ import static MyForum.util.MyForumConstant.*;
  * Description：
  **/
 @Service
+@Slf4j
 public class CommonServiceImpl implements CommonService {
 
     @Resource
@@ -62,6 +69,11 @@ public class CommonServiceImpl implements CommonService {
         prop.put("entityId",entityId);
         EventMessage eventMessage = eventMessageProducer.createEventMessage(EVENT_TYPE_LIKE, currentUserId, entityUserId, prop);
         eventMessageProducer.sendMessage(eventMessage);
+
+        //todo 点赞帖子 记录该帖子
+        if(entityType == ENTITY_TYPE_POST){
+            redisTemplate.opsForSet().add(OPERATED_POST_KEY, entityId);
+        }
 
         // -----------
         String keyPrefix = ENTITY_TYPE_REDIS_LIKE_KEY_MAP.getOrDefault(entityType,null);
@@ -136,4 +148,5 @@ public class CommonServiceImpl implements CommonService {
 
         return result;
     }
+
 }
