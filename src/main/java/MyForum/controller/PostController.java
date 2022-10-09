@@ -41,11 +41,13 @@ public class PostController {
     public String getPostsDefault(Model model,
                                   @PathVariable(value = "currentPage",required = false) Integer currentPage){
         // 不输入页号则默认为1
-        if(currentPage == null){
+        if(currentPage == null || currentPage <= 0){
             currentPage = 1;
         }
         Page<Post> page = postService.getPostList(currentPage);
         model.addAttribute("page",page);
+
+        model.addAttribute("isNew",true);
 
         return "/index";
     }
@@ -56,13 +58,15 @@ public class PostController {
     @GetMapping(value = {"/post/list/hot","/post/list/hot/{currentPage}"})
     public String getHotPosts(Model model,
                               @PathVariable(value = "currentPage",required = false) Integer currentPage){
-        // 不输入页号则默认为1
-        if(currentPage == null){
+        // 不输入页号则默认为0
+        if(currentPage == null || currentPage <= 0){
             currentPage = 1;
         }
         Page<Post> page = postService.getHotPosts(currentPage);
         model.addAttribute("page",page);
+
         model.addAttribute("isHot",true);
+
 
         return "/index";
     }

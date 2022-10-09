@@ -10,19 +10,18 @@ import MyForum.pojo.EventMessage;
 import MyForum.pojo.Post;
 import MyForum.pojo.User;
 import MyForum.rabbitMQ.EventMessageProducer;
+import MyForum.redis.RedisConstant;
 import MyForum.service.PostService;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.BooleanUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static MyForum.redis.RedisConstant.*;
@@ -36,6 +35,7 @@ import static MyForum.util.MyForumConstant.*;
  * Description：
  **/
 @Service
+@Slf4j
 public class PostServiceImpl implements PostService {
     @Resource
     private PostMapper postMapper;
@@ -48,10 +48,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<Post> getPostList(Integer currentPage) {
-        // 避免页号出现0的情况
-        if(currentPage < 0){
-            currentPage = 1;
-        }
+
         Integer totalCount = postMapper.getCount(null);
         Page<Post> page = new Page<>(currentPage, totalCount);
 
@@ -65,11 +62,10 @@ public class PostServiceImpl implements PostService {
             post.setUser(userDTO);
 
             // 从redis中查帖子的点赞数 存入帖子
-            String key = LIKE_POST_KEY + post.getId();
-            Long likeCount = redisTemplate.opsForSet().size(key);
-            if(likeCount != null){
-                post.setScore(likeCount.intValue());
-            }
+            Integer likeCount = (Integer) redisTemplate.opsForValue().get(RedisConstant.getLikePostCountKey(post.getId()));
+            likeCount = likeCount != null ? likeCount : 0;
+
+            post.setLikeCount(Long.valueOf(likeCount));
         }
         page.setRecords(postList);
 
@@ -78,29 +74,34 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<Post> getHotPosts(Integer currentPage) {
-        // 避免页号出现0的情况
-        if(currentPage < 0){
-            currentPage = 0;
-        }
-        Integer totalCount = postMapper.getCount(null);
-        Page<Post> page = new Page<>(currentPage, totalCount);
 
-        List<Post> postList = postMapper.getHotPosts((currentPage-1)*Config.getPageSize(),page.getPageSize());
-        // 将user信息包装进每一个postDetaill里面
-        // 批量查询会不会提高效率？
-        for (Post post : postList) {
-            Long userId = post.getUserId();
-            User user = userMapper.selectUserById(userId);
-            UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
-            post.setUser(userDTO);
-
-            // 从redis中查帖子的点赞数 存入帖子
-            String key = LIKE_POST_KEY + post.getId();
-            Long likeCount = redisTemplate.opsForSet().size(key);
-            if(likeCount != null){
-                post.setScore(likeCount.intValue());
-            }
+//        Integer totalCount = postMapper.getCount(null);
+//        Page<Post> page = new Page<>(currentPage, totalCount);
+//
+//        List<Post> postList = postMapper.getHotPosts((currentPage-1)*Config.getPageSize(),page.getPageSize());
+        Long size = redisTemplate.opsForZSet().size(HOTTEST_POST_KEY);
+        if(size == null){
+            log.error("服务端出现错误，无法查询到热帖列表");
+            throw new RuntimeException("服务端出现错误，无法查询到热帖列表");
         }
+        long start = (long) (currentPage - 1) *Config.getPageSize();
+        long end = start + Config.getPageSize();
+
+        Page<Post> page = new Page<>(currentPage, size.intValue());
+        Set<Object> postIds = redisTemplate.opsForZSet().reverseRange(HOTTEST_POST_KEY, start, end-1);
+
+        if(postIds == null){
+            log.error("服务端出现错误，无法查询到热帖列表");
+            throw new RuntimeException("服务端出现错误，无法查询到热帖列表");
+        }
+
+        List<Post> postList = new ArrayList<>();
+        for (Object postId : postIds) {
+            Post post = getPostById(Long.valueOf(String.valueOf(postId)));
+
+            postList.add(post);
+        }
+
         page.setRecords(postList);
 
         return page;
@@ -140,16 +141,15 @@ public class PostServiceImpl implements PostService {
            isLiked = redisTemplate.opsForSet().isMember(LIKE_POST_KEY + postId, currentUser.getId());
         }
 
-        String countKey = LIKE_POST_KEY + postId;
-        // 从redis中查帖子的点赞数 存入帖子
-        Long likeCount = redisTemplate.opsForSet().size(countKey);
 
         if(post != null){
             post.setIsLiked(isLiked);
 
-            if(likeCount != null){
-                post.setScore(post.getScore()+likeCount.intValue());
-            }
+            // 从redis中查帖子的点赞数 存入帖子
+            Integer likeCount = (Integer) redisTemplate.opsForValue().get(RedisConstant.getLikePostCountKey(post.getId()));
+            likeCount = likeCount != null ? likeCount : 0;
+
+            post.setLikeCount(Long.valueOf(likeCount));
             return post;
         }
         // 若没有缓存 则到数据库中查
@@ -162,15 +162,14 @@ public class PostServiceImpl implements PostService {
         UserDTO userDTO = BeanUtil.copyProperties(userMapper.selectUserById(userId), UserDTO.class);
         post.setUser(userDTO);
         post.setIsLiked(isLiked);
+        // 从redis中查帖子的点赞数 存入帖子
+        Integer likeCount = (Integer) redisTemplate.opsForValue().get(RedisConstant.getLikePostCountKey(post.getId()));
+        likeCount = likeCount != null ? likeCount : 0;
 
-        if(likeCount != null){
-            post.setScore(likeCount.intValue());
-        }else {
-            post.setScore(0);
-        }
+        post.setLikeCount(Long.valueOf(likeCount));
+
         // 查完后缓存到redis中
         redisTemplate.opsForValue().set(key,post,CACHE_POST_EXPIRED_TIME, TimeUnit.SECONDS);
-
 
         return post;
     }
@@ -190,11 +189,10 @@ public class PostServiceImpl implements PostService {
         for (Post post : postList) {
             post.setUser(userDTO);
             // 从redis中查帖子的点赞数 存入帖子
-            String countKey = LIKE_POST_KEY + post.getId();
-            Long likeCount = redisTemplate.opsForSet().size(countKey);
-            if(likeCount != null){
-                post.setScore(likeCount.intValue());
-            }
+            Integer likeCount = (Integer) redisTemplate.opsForValue().get(RedisConstant.getLikePostCountKey(post.getId()));
+            likeCount = likeCount != null ? likeCount : 0;
+
+            post.setLikeCount(Long.valueOf(likeCount));
         }
 
         page.setRecords(postList);
@@ -215,7 +213,7 @@ public class PostServiceImpl implements PostService {
         // 根据帖子信息获取发布者的id
         Post post = postMapper.getPostById(postId);
         // 更新用户被点赞总数
-        String userLikeCountKey = LIKE_USER_TOTAL_KEY+post.getUserId();
+        String userLikeCountKey = LIKE_USER_COUNT_KEY +post.getUserId();
 
         String userId = currentUser.getId().toString();
         // 通过redis查是否有本用户 来判断是否已点赞
@@ -246,7 +244,10 @@ public class PostServiceImpl implements PostService {
         // 将帖子缓存删掉 防止数据不一致
         redisTemplate.delete(CACHE_POST_KEY+postId);
 
-        Integer likeCount = postMapper.getScoreByPostId(postId);
+        // 从redis中查帖子的点赞数 存入帖子
+        Integer likeCount = (Integer) redisTemplate.opsForValue().get(RedisConstant.getLikePostCountKey(post.getId()));
+        likeCount = likeCount != null ? likeCount : 0;
+
         map.put("likeCount",likeCount);
 
         //todo 记录被点赞的帖子id

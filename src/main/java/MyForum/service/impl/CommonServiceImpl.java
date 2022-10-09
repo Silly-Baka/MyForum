@@ -4,22 +4,15 @@ import MyForum.common.UserHolder;
 import MyForum.pojo.EventMessage;
 import MyForum.rabbitMQ.EventMessageProducer;
 import MyForum.service.CommonService;
+import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.redis.connection.BitFieldSubCommands;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static MyForum.redis.RedisConstant.*;
@@ -84,7 +77,7 @@ public class CommonServiceImpl implements CommonService {
         // 根据实体类型获取到redis的key
         String likeKey = ENTITY_TYPE_REDIS_LIKE_KEY_MAP.get(entityType) + entityId;
         // 被点赞者的key
-        String likeTotalKey = LIKE_USER_TOTAL_KEY + entityUserId;
+        String likeTotalKey = LIKE_USER_COUNT_KEY + entityUserId;
         // 查询redis 看是否已点赞
         Boolean isLiked = redisTemplate.opsForSet().isMember(likeKey, currentUserId);
         //todo 已优化成lua脚本
@@ -95,23 +88,22 @@ public class CommonServiceImpl implements CommonService {
                 currentUserId
         );
         result.put("likeStatus",likeStatus);
-//        // 尚未点赞 则点赞
-//        if(BooleanUtil.isFalse(isLiked)){
-//            //todo 将两条命令优化成lua脚本
-//            redisTemplate.opsForSet().add(likeKey,currentUserId);
-//            // 增加发起者的被点赞总数
-//            redisTemplate.opsForValue().increment(likeTotalKey);
-//            result.put("likeStatus",1);
-//        }else {
-//        // 否则取消点赞
-//            //todo 将两条命令优化成lua脚本
-//            redisTemplate.opsForSet().remove(likeKey,currentUserId);
-//            // 减少发起者的点赞总数
-//            redisTemplate.opsForValue().decrement(likeTotalKey);
-//            result.put("likeStatus",0);
-//        }
-        // 获取当前实体的点赞总数
-        Long likeCount = redisTemplate.opsForSet().size(likeKey);
+
+
+        // 实体点赞总数key
+        String entityTotalKey = keyPrefix + "count:" + entityId;
+        // 用户点赞总数key
+        String userTotalKey = LIKE_USER_COUNT_KEY + entityUserId;
+
+        Long likeCount = 0L;
+        // 更新实体以及用户的点赞总数
+        if(BooleanUtil.isTrue(likeStatus)){
+            likeCount = redisTemplate.opsForValue().increment(entityTotalKey);
+            redisTemplate.opsForValue().increment(userTotalKey);
+        }else {
+            likeCount = redisTemplate.opsForValue().decrement(entityTotalKey);
+            redisTemplate.opsForValue().decrement(userTotalKey);
+        }
         result.put("likeCount",likeCount);
 
         return result;

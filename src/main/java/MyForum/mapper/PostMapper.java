@@ -30,12 +30,9 @@ public interface PostMapper {
     Integer getCount(Long userId);
 
     /**
-     * 按照热门顺序获取帖子
-     * @param offset 当前页号
-     * @param pageSize 页大小
+     * 按照热度顺序获取100条帖子
      */
-    List<Post> getHotPosts(@Param("offset") Integer offset,
-                           @Param("pageSize") Integer pageSize);
+    List<Post> getHotPosts();
 
     /**
      * 根据帖子id获取帖子

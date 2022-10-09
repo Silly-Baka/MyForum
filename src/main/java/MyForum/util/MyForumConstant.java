@@ -1,6 +1,7 @@
 package MyForum.util;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,7 +24,7 @@ public class MyForumConstant {
      * 网站开启时间 用于计算热度值
      * 随便搞 2018年1月1日
      */
-    public static final LocalDate START_DATE = LocalDate.of(2018,1,1);
+    public static final LocalDateTime START_DATE = LocalDateTime.of(2018,1,1,0,0,0);
 
     /**
      * 成功激活

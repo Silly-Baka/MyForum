@@ -53,7 +53,7 @@
 							<ul class="d-inline float-right">
 								<li class="d-inline ml-2">
 									<a href="#" onclick="likePost()" th:class="${post.isLiked == true ? 'text-danger' : 'text-primary'}" id="likePostBtn">
-										<b id="postScore" th:text="${post.isLiked == true ? '已赞' : '点赞'}">已赞</b>  <i th:text="${post.score}">666</i>
+										<b id="postScore" th:text="${post.isLiked == true ? '已赞' : '点赞'}">已赞</b>  <i th:text="${post.likeCount}">666</i>
 									</a>
 								</li>
 								<li class="d-inline ml-2">|</li>

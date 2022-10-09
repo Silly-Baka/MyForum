@@ -389,7 +389,7 @@ public class UserServiceImpl implements UserService {
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
 
         // 获取用户被赞的次数 = Redis中未刷入db的点赞 + db中已有的点赞
-        Integer likedCount = (Integer) redisTemplate.opsForValue().get(LIKE_USER_TOTAL_KEY + userId);
+        Integer likedCount = (Integer) redisTemplate.opsForValue().get(LIKE_USER_COUNT_KEY + userId);
         if(likedCount == null){
             likedCount = 0;
         }

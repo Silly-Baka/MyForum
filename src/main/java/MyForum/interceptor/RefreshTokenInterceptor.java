@@ -6,7 +6,6 @@ import MyForum.pojo.User;
 import MyForum.service.UserService;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,7 +17,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static MyForum.redis.RedisConstant.*;
@@ -60,7 +58,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
 
         // 从redis中获取用户被点赞总数 并设置到用户信息中
-        Integer likedCount = (Integer) redisTemplate.opsForValue().get(LIKE_USER_TOTAL_KEY+userDTO.getId());
+        Integer likedCount = (Integer) redisTemplate.opsForValue().get(LIKE_USER_COUNT_KEY +userDTO.getId());
         userDTO.setLikedCount(likedCount);
 
         UserHolder.addUser(userDTO);

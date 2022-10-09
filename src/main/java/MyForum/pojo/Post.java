@@ -59,8 +59,8 @@ public class Post implements Serializable {
     /**
      * 帖子的热度
      */
-    @Field(type = FieldType.Integer)
-    private Integer score;
+    @Field(type = FieldType.Double)
+    private Double score;
     /**
      * 回帖数量
      */
@@ -75,4 +75,8 @@ public class Post implements Serializable {
      * 当前用户已经点赞
      */
     private Boolean isLiked;
+    /**
+     * 点赞数
+     */
+    private Long likeCount;
 }

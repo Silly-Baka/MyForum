@@ -66,9 +66,17 @@ public class RedisConstant {
      */
     public static final String LIKE_COMMENT_KEY = "liked:comment:";
     /**
-     * 查看用户总被点赞数的key   liked:user:total: + userId
+     * 查看用户被点赞数的key   liked:user:count: + userId
      */
-    public static final String LIKE_USER_TOTAL_KEY = "liked:user:total:";
+    public static final String LIKE_USER_COUNT_KEY = "liked:user:count:";
+    /**
+     * 查看帖子被点赞数的key liked:post:count: + postId
+     */
+    public static final String LIKE_POST_COUNT_KEY = "liked:post:count:";
+    /**
+     * 查看帖子被点赞数的key
+     */
+    public static final String LIKE_COMMENT_COUNT_KEY = "liked:comment:count:";
 
     /**
      * 某用户被关注列表的key  followed:user: + userId
@@ -117,6 +125,16 @@ public class RedisConstant {
 
     public static String getCountUVSection(LocalDate startDate, LocalDate endDate){
         return COUNT_UV_SECTION + startDate.format(FORMATTER) + "_" + endDate.format(FORMATTER);
+    }
+
+    public static String getLikePostCountKey(Long postId){
+        return LIKE_POST_COUNT_KEY + postId;
+    }
+    public static String getLikeUserCountKey(Long userId){
+        return LIKE_USER_COUNT_KEY + userId;
+    }
+    public static String getLikeCommentCountKey(Long commentId){
+        return LIKE_COMMENT_COUNT_KEY + commentId;
     }
 
 
